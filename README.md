@@ -3,7 +3,7 @@
 Reads were downloaded using the following command:
 
 ```
-fasterq-dump --threads 4 -p --split-files RunID
+fasterq-dump --threads 4 -p --split-files --outfile PLATFORM_ASSAYTYPE_LIBRARYLAYOUT/BIOPROJECTID_RUNID.fastq RunID
 ```
 
 ## NOTES
