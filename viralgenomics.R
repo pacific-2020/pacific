@@ -6,6 +6,8 @@ library(dplyr)
 library(rbenchmark)
 library(compiler)
 library(stringr)
+library(RSQLite)
+
 unescape_html <- function(str){
   xt <- xml_text(read_html(paste0("<x>", str, "</x>")))
   return(paste("<meta>", xt, "</meta>"))
@@ -44,6 +46,8 @@ iterations <- as.integer(viralgenomes$count/maxrecords)
 
 sinfo <- do.call("rbind", lapply(c(0:iterations), getSummaryInfo, webhistory = viralgenomes$web_history, maxrecords=maxrecords))
 csinfo <- data.frame(apply(sinfo, 2, simplifycolumn))
+
+
 
 numcol <- c("uid", "rsuid", "gbuid", "chainid", "taxid", "speciestaxid", "coverage", "primary", "contign50", "scaffoldn50")
 factorcol <- c("assemblyaccession", "lastmajorreleaseaccession", "latestaccession", "assemblyname", "ucscname", "ensemblname", "speciesname", "assemblytype", "assemblyclass", "assemblystatus","biosampleaccn","biosampleid", "releaselevel", "releasetype", "refseq_category", "exclfromrefseq")
@@ -92,7 +96,53 @@ x <- type.convert(x)
 csinfo <- cbind(csinfo, x)
 csinfo <- select(csinfo, -meta, -sortorder, -gb_bioprojects, -rs_bioprojects, -synonym, -biosource)
 
-write.table(csinfo, "/media/dstore/covid19/assemblyInfo.20200402.txt", sep = "\t", quote = F, row.names = F, col.names = T)
+write.table(csinfo, "/media/dstore/covid19/assemblyInfo.20200402.txt", sep = "\t", quote = T, row.names = F, col.names = T)
 
+db = dbConnect(SQLite(), dbname="/media/dstore/covid19/ncbi.virus.sqlite")
+dbSendQuery(conn=db, "CREATE TABLE assembly (uid INTEGER, rsuid INTEGER, gbuid INTEGER, assemblyaccession TEXT, lastmajorreleaseaccession TEXT, latestaccession TEXT, chainid INTEGER, assemblyname TEXT, ucscname TEXT, ensemblname TEXT, taxid INTEGER, organism TEXT, speciestaxid INTEGER, speciesname TEXT, assemblytype TEXT, assemblyclass TEXT, assemblystatus TEXT, wgs TEXT, gb_projects TEXT, rs_projects TEXT, biosampleaccn TEXT, biosampleid TEXT, coverage REAL, partialgenomerepresentation TEXT, primary INTEGER, assemblydescription TEXT, releaselevel TEXT, releasetype TEXT, asmreleasedate_genbank DATETIME, asmreleasedate_refseq DATETIME, seqreleasedate DATETIME, asmupdatedate DATETIME, submissiondate DATETIME, lastupdatedate DATETIME, submitterorganization TEXT, refseq_category TEXT, anomalouslist TEXT, exclfromrefseq TEXT, propertylist TEXT, fromtype TEXT, contign50 INTEGER, scaffoldn50 INTEGER, ftppath_genbank TEXT, ftppath_refseq TEXT, ftppath_assembly_rpt TEXT, ftppath_stats_rpt TEXT, ftppath_regions_rpt TEXT, gb_bioprojectaccn TEXT, gb_bioprojectid REAL, rs_bioprojectaccn TEXT, rs_bioprojectid REAL, synonym_gbacc TEXT, synonym_rsacc TEXT, synonym_identical TEXT, biosource_strain TEXT, biosource_sex TEXT, biosource_isolate TEXT, alt_loci_count.all INTEGER, chromosome_count.all INTEGER, contig_count.all INTEGER, contig_l50.all INTEGER, contig_n50.all INTEGER, non_chromosome_replicon_count.all INTEGER, replicon_count.all INTEGER, scaffold_count.all INTEGER, scaffold_count.placed INTEGER, scaffold_count.unlocalized INTEGER, scaffold_count.unplaced INTEGER, scaffold_l50.all INTEGER, scaffold_n50.all INTEGER, total_length.all INTEGER, ungapped_length.all INTEGER)")
+dbWriteTable(db, "assembly", csinfo)
+
+##required fields:
+uid
+rsuid
+gbuid
+lastmajorreleaseaccession
+assemblyname
+taxid
+Organism
+speciestaxid
+speciesname
+assemblystatus
+asmreleasedate_genbank
+asmreleasedate_refseq
+lastupdatedate
+propertylist
+ftppath_genbank
+ftppath_refseq
+synonym_identical #from synonymous column
+biosource_strain #from biosource
+biosource_sex #from biosource
+biosource_isolate #from biosource
+total_length.all #from meta stats column
+ungapped_length.all #from meta stats column
+
+
+
+#viraltaxonomy <- entrez_search("taxonomy", 'txid10239[Organism:exp]', use_history = T)
+
+virustaxid <- unique(csinfo$taxid)
+
+
+getLineage <- function(start, maxrecords) {
+  end <- start + maxrecords - 1
+  end <- ifelse(end>length(virustaxid), length(virustaxid), end)
+  print(start)
+  print(end)
+  taxml <- entrez_fetch("taxonomy",id = virustaxid[start:end], rettype = "xml")
+  taxlineage <- xmlToList(xmlParse(taxml, asText = T))
+  return(data.frame(taxid = unlist(subListExtract(y, 'TaxId')), lineage = unlist(subListExtract(y, 'Lineage'))))
+}
+maxrecords <- 200
+lineageinfo <- do.call("rbind", lapply(seq(1,length(virustaxid),maxrecords), getLineage, maxrecords))
 
 
