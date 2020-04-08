@@ -123,6 +123,27 @@ def accuracy(labels, predictions):
 ##### functions for nanopore process reads
     
 
+def get_plain_reads(samfile):
+    '''
+    Get only reads 
+    '''
+    reads = []
+    with open(samfile, 'r') as file_in:
+        counter = 0
+        for line in file_in:
+            counter +=1
+            line = line.rstrip()
+            if counter == 2:
+                # set limit read lenght
+                if len(line) >= 100 and 'N' not in line:
+                    #make kmer
+                    reads_temp = [line[i:i+150] for i in range(0, len(line), 150)]
+                    reads.append(reads_temp)
+            if counter == 4:
+                counter = 0
+    return reads
+
+
 def get_reads_nanopore(samfile, kmer):
     '''
     This function take a filtered samfile and get reads
@@ -144,17 +165,18 @@ def get_reads_nanopore(samfile, kmer):
     return reads
 
 
-def read_preprocess_nanopore(files, number, kmer_size):
+def read_nanopore(files, number):
     '''
     This function take a list of reads and preprocess a number of reads
     with tokenizer
     '''
     reads = []
     for file in enumerate(files):
-        reads += get_reads_nanopore(path+file[1], kmer_size)
+        reads += get_plain_reads(path+file[1])
         if len(reads) > number:
             reads = reads[:number]
             break
+    
     return reads
 
 
@@ -326,10 +348,6 @@ if __name__ == '__main__':
 
     accuracy_validation = accuracy(np.array(labels_high_acc), predictions_argmax)
     
-    results = []
-    for i in enumerate(labels_high_acc):
-        results.append((i[1], predictions_argmax[i[0]]))
-        
     
     #### Test with real data Nanopore
     
@@ -340,10 +358,64 @@ if __name__ == '__main__':
     files_non_covid = [i for i in files if i.endswith('non_covid.fastq')]
     
     # Lets try 20k reads for training each
-    covid = read_preprocess_nanopore(files_covid, 5000, 4)
-    non_covid = read_preprocess_nanopore(files_non_covid, 5000, 4)
+    covid = read_nanopore(files_covid, 2000)
+    non_covid = read_nanopore(files_non_covid, 2000)
     
-    total_sequences_predict =  covid + non_covid
+    kmer = 4
+    
+    def most_common(lst):
+        return max(set(lst), key=lst.count)
+    
+    # go one read at a time
+    right = 0
+    wrong = 0
+    for read in covid:
+        read_predictions = []
+        for chunk in read:
+            if len(chunk) >50:
+                # convert chunk into k-mers
+                chunk = [' '.join(chunk[x:x+kmer].upper() for x in range(len(chunk) - kmer + 1))]
+                
+                # conver kmers into tokens
+                chunk_token = tokenizer.texts_to_sequences(chunk)
+                # pad
+                chunk_token_padded = pad_sequences(chunk_token, maxlen = max_length, padding = 'post')
+                predictions = model.predict(chunk_token_padded)
+                if max(predictions) > 0.9:
+                    read_predictions.append(int(np.argmax(predictions, axis=1)))
+        if most_common(read_predictions) == 3:
+            right +=1
+        else:
+            wrong +=1
+    
+    acc_covid = right/(right+wrong)
+    print('acc for covid reads: ', acc_covid)
+    
+    right = 0
+    wrong = 0
+    for read in non_covid:
+        read_predictions = []
+        for chunk in read:
+            if len(chunk) >50:
+                # convert chunk into k-mers
+                chunk = [' '.join(chunk[x:x+kmer].upper() for x in range(len(chunk) - kmer + 1))]
+                
+                # conver kmers into tokens
+                chunk_token = tokenizer.texts_to_sequences(chunk)
+                # pad
+                chunk_token_padded = pad_sequences(chunk_token, maxlen = max_length, padding = 'post')
+                predictions = model.predict(chunk_token_padded)
+                if max(predictions) > 0.9:
+                    read_predictions.append(int(np.argmax(predictions, axis=1)))
+        if most_common(read_predictions) == 4:
+            right +=1
+        else:
+            wrong +=1
+    
+    acc_non_covid = right/(right+wrong)
+    print('acc for non covid reads: ', acc_non_covid)
+
+    #######
     
     # labes order are ['Cornidovirineae', 'Influenza', 'Metapneumovirus', 'Sars_cov_2', 'human_reads'])
     
