@@ -6,6 +6,7 @@ library(rbenchmark)
 library(compiler)
 library(RSQLite)
 library(Biobase)
+library(RCurl)
 
 unescape_html <- function(str){
   xt <- xml_text(read_html(paste0("<x>", str, "</x>")))
@@ -78,9 +79,6 @@ y <- type.convert(y)
 ##date columns are not formatted correctly using type convert so take care of them
 y <- mutate_at(y, colnames(y)[grep("date", colnames(y))], as.Date)
 
-##create sqlite database for later use
-db = dbConnect(SQLite(), dbname="/media/dstore/covid19/ncbi.virus2.sqlite")
-dbWriteTable(db, "assembly", y)
 
 ##when dates are written in sqlite table, they are written as real numbers
 ##to convert them back to legible date format
@@ -91,39 +89,19 @@ dbWriteTable(db, "assembly", y)
 ##(2) TaxID seems to refer to a strain level identification vs speciestaxid as name suggests
 ##There can be more than one assembly per taxid, probably because of different strains
 
+##get Lineage information
+download.file("https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz", "/media/dstore/covid19/ncbitaxdmp/new_taxdump.tar.gz")
+setwd("/media/dstore/covid19/ncbitaxdmp/")
+system("tar -xvzf new_taxdump.tar.gz")
+system('sed "s/\t//g" rankedlineage.dmp | sed "s/\'//g" >rankedlineage.dmp.tmp')
+rankedlineage <- read.table("rankedlineage.dmp.tmp", sep="|", quote = "", fill = T)
+colnames(rankedlineage) <- c("taxid", "tax_name", "species", "genus", "family", "order", "class", "phylum", "kingdom", "superkingdom", "empty")
 
-#viraltaxonomy <- entrez_search("taxonomy", 'txid10239[Organism:exp]', use_history = T)
+##merged lineage information
 
-virustaxid <- unique(y$taxid)
-getLineage <- function(start, maxrecords) {
-  end <- start + maxrecords - 1
-  end <- ifelse(end>length(virustaxid), length(virustaxid), end)
-  taxml <- entrez_fetch("taxonomy",id = virustaxid[start:end], rettype = "xml")
-  taxlineage <- xmlToList(xmlParse(taxml, asText = T))
-  l <- data.frame(taxid = unlist(subListExtract(taxlineage, 'TaxId')), lineage = unlist(subListExtract(taxlineage, 'Lineage')))
-  return(l)
-}
-maxrecords <- 200
-lineageinfo <- do.call("rbind", lapply(seq(1,length(virustaxid),maxrecords), getLineage, maxrecords))
-
-#y <- merge(x, lineageinfo, by.x = "taxid", by.y = "taxid", all.x = T)
-#seqtable <- read.table("/media/dstore/covid19/seqid.vs.genomeid.txt", header = F, sep = "\t")
-#z <- merge(seqtable, y, by.x = "V1", by.y = "synonym_gbacc", all.x = T)
-#write.table(z, "/media/dstore/covid19/seqid.vs.genomeinfo.txt", sep = "\t", col.names = T, row.names = F, quote = F)
-
-
-
-#entrez_fetch("assembly", web_history = viralgenomes$web_history, retstart = 1, retmax = 20, rettype = "xml", retmode = "full")
-
-#getSummaryInfo <- function(iteration, webhistory, maxrecords) {
-#  print(paste("processing", iteration, "iteration"))
-#  x <- read_xml(entrez_fetch("assembly", web_history = webhistory, retstart = iteration*maxrecords+1, retmax = maxrecords, rettype = "docsum", retmode = "xml"))
-#  y <- bind_rows(as_list(x))
-#  return(y)
-#}
-
-#viralgenomes <- entrez_search("assembly", 'txid10239[Organism:exp] & latest[filter] & "complete genome"[filter]', use_history = T)
-#maxrecords <- 200
-#iterations <- as.integer(viralgenomes$count/maxrecords)
-#sinfo <- do.call("bind_rows", lapply(c(0:iterations), getSummaryInfo, webhistory = viralgenomes$web_history, maxrecords=maxrecords))
+z <- merge(y, rankedlineage, by.x = "taxid", by.y = "taxid", all.x = T)
+z <- droplevels(z)
+##create sqlite database for later use
+db = dbConnect(SQLite(), dbname="/media/dstore/covid19/ncbi.virus.20200408.sqlite")
+dbWriteTable(db, "assembly", z)
 
