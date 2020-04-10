@@ -7,6 +7,8 @@ library(compiler)
 library(RSQLite)
 library(Biobase)
 library(RCurl)
+library(ggthemes)
+library(ggrepel)
 
 unescape_html <- function(str){
   xt <- xml_text(read_html(paste0("<x>", str, "</x>")))
@@ -93,15 +95,34 @@ y <- mutate_at(y, colnames(y)[grep("date", colnames(y))], as.Date)
 download.file("https://ftp.ncbi.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz", "/media/dstore/covid19/ncbitaxdmp/new_taxdump.tar.gz")
 setwd("/media/dstore/covid19/ncbitaxdmp/")
 system("tar -xvzf new_taxdump.tar.gz")
+##lineage information
 system('sed "s/\t//g" rankedlineage.dmp | sed "s/\'//g" >rankedlineage.dmp.tmp')
 rankedlineage <- read.table("rankedlineage.dmp.tmp", sep="|", quote = "", fill = T)
 colnames(rankedlineage) <- c("taxid", "tax_name", "species", "genus", "family", "order", "class", "phylum", "kingdom", "superkingdom", "empty")
-
+##host information
+system('sed "s/\t//g" host.dmp >host.dmp.tmp')
+host <- read.table("host.dmp.tmp", sep="|", quote ="")
+colnames(host) <- c("taxid", "potentialhosts")
 ##merged lineage information
 
 z <- merge(y, rankedlineage, by.x = "taxid", by.y = "taxid", all.x = T)
+z <- merge(z, host, by.x = "taxid", by.y = "taxid", all.x = T)
 z <- droplevels(z)
+z <- select(z, -empty)
+
+
+
+
+##consolidate host information
+z <- z %>% mutate(potentialhosts = case_when( .$potentialhosts == "vertebrates,human" ~ "human,vertebrates", is.na(.$potentialhosts) ~ "Unknown", .$potentialhosts == "vertebrates,invertebrates,human" ~ "human,invertebrates,vertebrates", .$potentialhosts == "invertebrates,vertebrates" ~ "vertebrates,invertebrates", TRUE ~ as.character(.$potentialhosts))) %>% mutate(potentialhosts = as.factor(potentialhosts))
+
+##identify representative genome for a given tax id
+spectab <- data.frame(table(z$taxid))
+colnames(spectab) <- c("taxid", "genomes")
+spectab$taxid <- as.integer(as.character(spectab$taxid))
+
 ##create sqlite database for later use
-db = dbConnect(SQLite(), dbname="/media/dstore/covid19/ncbi.virus.20200408.sqlite")
+db = dbConnect(SQLite(), dbname="/media/dstore/covid19/ncbi.virus.20200409.sqlite")
 dbWriteTable(db, "assembly", z)
+
 
