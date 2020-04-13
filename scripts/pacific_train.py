@@ -3,7 +3,7 @@
 """
 Created on Sun Apr  5 21:42:12 2020
 
-Prepare the training with synthetic data that will be generated from transcriptomes
+Grab reads from fasta files and train the model
 
 @author: labuser
 """
@@ -14,18 +14,22 @@ import os
 
 from sklearn.preprocessing import LabelBinarizer
 import numpy as np
-from keras.preprocessing.text import Tokenizer, text_to_word_sequence
+from keras.preprocessing.text import Tokenizer
 
 from sklearn.model_selection import train_test_split
 from keras.preprocessing.sequence import pad_sequences
 
 from keras.models import Sequential
-from keras.layers import Embedding, LSTM, Dense, Bidirectional, Conv1D
+from keras.layers import Embedding, LSTM, Dense, Bidirectional, Conv1D, CuDNNLSTM
 from keras.layers import Dropout, Activation, MaxPooling1D
 import tensorflow as tf
 
 from numpy.random import seed
 from tensorflow import set_random_seed
+import pickle
+import time
+from sklearn.utils import shuffle
+from keras.models import load_model
 
 
 def prepare_read(trancriptome):
@@ -40,18 +44,14 @@ def prepare_read(trancriptome):
     return sequences
 
 
-def random_reads(sequences, number_reads, length, kmer):
+def process_reads(sequences, number_reads, length, kmer):
     '''
     '''
     r_reads = []
-    for i in range(number_reads):
-        transcript_number = random.randrange(len(sequences))
-        try:
-            begining = random.randrange(len(sequences[transcript_number])-length)
-            sequence_complete = sequences[transcript_number][begining:begining+length]
-            r_reads.append(' '.join(sequence_complete[x:x+kmer].upper() for x in range(len(sequence_complete) - kmer + 1)))
-        except:
-            continue
+    for i in enumerate(sequences):
+        # check the reads does not contain weird characters
+        if all(c in 'AGCT' for c in i[1].upper()):
+            r_reads.append(' '.join(i[1][x:x+kmer].upper() for x in range(len(i[1]) - kmer + 1)))
     return r_reads
 
 
@@ -59,51 +59,14 @@ def main(directory, number_reads, size_lenght, k_mer_size):
     '''
     '''
     files = os.listdir(directory)
-    read_per_file =int(number_reads/len(files))
     reads = []
     for file in files:
         all_transcripts = prepare_read(directory+'/'+file)
-        reads += random_reads(all_transcripts, 
-                              read_per_file, 
-                              size_lenght,
-                              k_mer_size)
-    return reads
-
-### Illumina reads functions
-    
-def get_reads_illumina(samfile, kmer):
-    '''
-    This function take a filtered samfile and get reads
-    '''
-    reads = []
-    with open(samfile, 'r') as file_in:
-        counter = 0
-        for line in file_in:
-            counter +=1
-            line = line.rstrip()
-            if counter == 2:
-                # set limit read lenght
-                if len(line) >= 100 and 'N' not in line:
-                    #make kmer
-                    reads.append(' '.join(line[x:x+kmer].upper() for x in range(len(line) - kmer + 1)))
-            if counter == 4:
-                counter = 0
-    return reads
-
-
-def read_preprocess_illumina(files, number, kmer_size):
-    '''
-    This function take a list of reads and preprocess a number of reads
-    with tokenizer
-    '''
-    reads = []
-    for file in enumerate(files):
-        reads += get_reads_illumina(path+file[1], kmer_size)
-        if len(reads) > number:
-            reads = reads[:number]
-            break
-    return reads
-
+        reads += process_reads(all_transcripts, 
+                               number_reads, 
+                               size_lenght,
+                               k_mer_size)
+    return reads 
 
 def accuracy(labels, predictions):
     '''
@@ -120,69 +83,9 @@ def accuracy(labels, predictions):
     
     return correct/len(labels)
 
-##### functions for nanopore process reads
-    
-
-def get_plain_reads(samfile):
-    '''
-    Get only reads 
-    '''
-    reads = []
-    with open(samfile, 'r') as file_in:
-        counter = 0
-        for line in file_in:
-            counter +=1
-            line = line.rstrip()
-            if counter == 2:
-                # set limit read lenght
-                if len(line) >= 100 and 'N' not in line:
-                    #make kmer
-                    reads_temp = [line[i:i+150] for i in range(0, len(line), 150)]
-                    reads.append(reads_temp)
-            if counter == 4:
-                counter = 0
-    return reads
-
-
-def get_reads_nanopore(samfile, kmer):
-    '''
-    This function take a filtered samfile and get reads
-    '''
-    reads = []
-    with open(samfile, 'r') as file_in:
-        counter = 0
-        for line in file_in:
-            counter +=1
-            line = line.rstrip()
-            if counter == 2:
-                # set limit read lenght
-                if len(line) >= 100 and 'N' not in line:
-                    #make kmer
-                    line = line[:150]
-                    reads.append(' '.join(line[x:x+kmer].upper() for x in range(len(line) - kmer + 1)))
-            if counter == 4:
-                counter = 0
-    return reads
-
-
-def read_nanopore(files, number):
-    '''
-    This function take a list of reads and preprocess a number of reads
-    with tokenizer
-    '''
-    reads = []
-    for file in enumerate(files):
-        reads += get_plain_reads(path+file[1])
-        if len(reads) > number:
-            reads = reads[:number]
-            break
-    
-    return reads
-
 
 if __name__ == '__main__':
     
-
     seed_value = 42
     random.seed(seed_value)# 3. Set `numpy` pseudo-random generator at a fixed value
     np.random.seed(seed_value)# 4. Set `tensorflow` pseudo-random generator at a fixed value
@@ -193,51 +96,45 @@ if __name__ == '__main__':
     sess = tf.Session(config=config)
     
     # Read lenght
-    read_lenght = 100
+    read_lenght = 150
     
     # make synthetic reads
-    Cornidovirineae_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/virus_ncbi/Cornidovirineae',
-                                         50000, read_lenght, 4)
-    Influenza_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/virus_ncbi/Influenza',
-                                         50000, read_lenght, 4)
-    Metapneumovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/virus_ncbi/Metapneumovirus',
-                                         50000, read_lenght, 4)
-    human_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/human/',
-                                         80000, read_lenght, 4)
-    Sars_cov_2 = main('/media/labuser/Data/COVID-19_classifier/pacific/data/virus_ncbi/Sars_cov_2',
-                                         30000, read_lenght, 4)
-    
-    # get real illumina reads from experiment 1 and 4
-    path = '/media/labuser/Data/COVID-19_classifier/pacific/data/'+\
-           'non_synthetic/illumina/processed/experiment_1_4/'
-    
-    files = os.listdir(path)
-    files_covid = [i for i in files if i.endswith('filtered_covid.sam.fastq')]
-    files_non_covid = [i for i in files if i.endswith('non_covid.sam.fastq')]
-    
-    covid = read_preprocess_illumina(files_covid, 15000, 4)
-    non_covid = read_preprocess_illumina(files_non_covid, 15000, 4)
-    
-    human_reads += non_covid
-    Sars_cov_2 += covid
-    
+    Cornidovirineae_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Cornidovirineae',
+                                         1, read_lenght, 4)
+    Influenza_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Influenza',
+                                         1, read_lenght, 4)
+    Metapneumovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Metapneumovirus',
+                                         1, read_lenght, 4)
+    Rhinovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Rhinovirus',
+                                         1, read_lenght, 4)
+    Sars_cov_2_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Sars_cov_2',
+                                         1, read_lenght, 4)
+    Human = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Human',
+                                         1, read_lenght, 4) 
+
     total_sequences =  Cornidovirineae_reads + \
                        Influenza_reads +\
                        Metapneumovirus_reads +\
-                       human_reads +\
-                       Sars_cov_2
+                       Rhinovirus_reads +\
+                       Sars_cov_2_reads +\
+                       Human
     
-    labels_to_fit = ['Cornidovirineae','Influenza',"Metapneumovirus","human_reads","Sars_cov_2"]
+    labels_to_fit = ['Cornidovirineae','Influenza',"Metapneumovirus","Rhinovirus","Sars_cov_2", 'Human']
     label_maker = LabelBinarizer()
     transfomed_label = label_maker.fit(labels_to_fit)
+    
+    # save label_maker
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.pickle', 'wb') as handle:
+        pickle.dump(label_maker, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
     labels = list(np.repeat('Cornidovirineae',len(Cornidovirineae_reads))) + \
              list(np.repeat('Influenza',len(Influenza_reads))) + \
              list(np.repeat('Metapneumovirus',len(Metapneumovirus_reads))) + \
-             list(np.repeat('human_reads',len(human_reads))) + \
-             list(np.repeat('Sars_cov_2',len(Sars_cov_2)))
+             list(np.repeat('Rhinovirus',len(Rhinovirus_reads))) + \
+             list(np.repeat('Sars_cov_2',len(Sars_cov_2_reads))) + \
+             list(np.repeat('Human',len(Human)))
              
-    labels_proces = label_maker.fit_transform(labels)
+    labels_proces = label_maker.transform(labels)
     
     # Tokenize the vocabulary
     tokenizer = Tokenizer()
@@ -247,13 +144,20 @@ if __name__ == '__main__':
     max_features = len(tokenizer.word_index)+1
     
     max_length = max([len(s.split()) for s in total_sequences])
+    # pad sequences
     sequences_preproces = pad_sequences(sequences_preproces, maxlen = max_length, padding = 'post')
     
-    #split dataset into training and testing
-    X_train,X_test,y_train,y_test = train_test_split(sequences_preproces, 
-                                                     labels_proces,
-                                                     test_size=0.10, 
-                                                     random_state=42)
+    sequences_preproces, labels_proces = shuffle(sequences_preproces, labels_proces)
+    
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.pickle', 'wb') as handle:
+        pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    '''
+    # loading
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.pickle', 'rb') as handle:
+        tokenizer = pickle.load(handle)
+    '''
+    
+    # Netweork parameter s
     
     # Convolution
     kernel_size = 3
@@ -279,8 +183,10 @@ if __name__ == '__main__':
                      activation='relu',
                      strides=1))
     model.add(MaxPooling1D(pool_size=pool_size))
-    model.add(Bidirectional(LSTM(lstm_output_size)))
-    model.add(Dense(5))
+    model.add(Bidirectional(CuDNNLSTM(lstm_output_size)))
+    model.add(Dense(50))
+    model.add(Dense(6))
+
     model.add(Activation('softmax'))
     
     model.compile(loss='categorical_crossentropy',
@@ -288,173 +194,40 @@ if __name__ == '__main__':
                   metrics=['binary_accuracy', 
                            'categorical_accuracy',
                            ])
-    
     model.summary()
     
+    # training time
+    start = time.clock()
+    
     print('Train...')
-    model.fit(X_train, y_train,
-              batch_size=batch_size,
-              epochs=epochs,
-              validation_data=(X_test, y_test))
+    
+    for epoch in range(epochs):
+        print("epoch %d" %epoch)
+        #train in batches of 100k sequences
+        for i in range(0, len(sequences_preproces), 200000):
+            start, end = i, i+200000
+            if end > len(sequences_preproces):
+                end = len(sequences_preproces)
+            print('chunk: ',start, end)
+            training_batch = sequences_preproces[start:end]
+            labels_batch = labels_proces[start:end] 
+            X_train,X_test,y_train,y_test = train_test_split(training_batch, 
+                                                             labels_batch,
+                                                             test_size=0.10, 
+                                                             random_state=42)
+            model.fit(X_train, y_train,
+                      batch_size=batch_size,
+                      epochs=1,
+                      validation_data=(X_test, y_test))
+    
     score, binary_acc, categorical_acc = model.evaluate(X_test, y_test, batch_size=batch_size)
+    print('Traning time:', time.clock() - start)
     print('Test accuracy:', binary_acc, categorical_acc, score)
     
-    ### seegin the acuracy for sars
+    # save keras model
+    model.save("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.h5")
+    print("Saved model to disk")
     
-    '''
-    predictions = model.predict(X_test)
-    
-    q = np.argmax(predictions, axis=1)
-
-    accuracy_validation = accuracy(np.array(labels_predict), predictions_argmax)
-    '''
-    
-    #### Test with real data
-    
-    # short illumina reads
-    path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/processed/experiment_2_3/'
-    files = os.listdir(path)
-    files_covid = [i for i in files if i.endswith('filtered_covid.sam.fastq')]
-    files_non_covid = [i for i in files if i.endswith('non_covid.sam.fastq')]
-    
-    # Lets try 20k reads for training each
-    covid = read_preprocess_illumina(files_covid, 5000, 4)
-    non_covid = read_preprocess_illumina(files_non_covid, 5000, 4)
-    
-    total_sequences_predict =  covid + non_covid
-    
-    
-    # labes order are ['Cornidovirineae', 'Influenza', 'Metapneumovirus', 'Sars_cov_2', 'human_reads'])
-    
-    labels_predict = list(np.repeat(3, len(covid))) + \
-                     list(np.repeat(4, len(non_covid)))
-
-    sequences_predict = tokenizer.texts_to_sequences(total_sequences_predict)
-    
-    sequences_preproces_predict = pad_sequences(sequences_predict, maxlen = max_length, padding = 'post')
-
-    predictions = model.predict(sequences_preproces_predict)
-    
-    # get rid of predictions where the best prediction is lower than 0.5
-    labels_high_acc = []
-    predictions_high_acc = []
-    for i in enumerate(predictions):
-        if max(i[1]) > 0.9:
-            predictions_high_acc.append(i[1])
-            labels_high_acc.append(labels_predict[i[0]])
-            
-    predictions_high_acc = np.array(predictions_high_acc)
-    predictions_argmax = np.argmax(predictions_high_acc, axis=1)
-
-    accuracy_validation = accuracy(np.array(labels_high_acc), predictions_argmax)
-    
-    
-    #### Test with real data Nanopore
-    
-    # short nanopore reads
-    path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/nanopore/processed/'
-    files = os.listdir(path)
-    files_covid = [i for i in files if i.endswith('filtered_covid.fastq')]
-    files_non_covid = [i for i in files if i.endswith('non_covid.fastq')]
-    
-    # Lets try 20k reads for training each
-    covid = read_nanopore(files_covid, 2000)
-    non_covid = read_nanopore(files_non_covid, 2000)
-    
-    kmer = 4
-    
-    def most_common(lst):
-        return max(set(lst), key=lst.count)
-    
-    # go one read at a time
-    right = 0
-    wrong = 0
-    for read in covid:
-        read_predictions = []
-        for chunk in read:
-            if len(chunk) >50:
-                # convert chunk into k-mers
-                chunk = [' '.join(chunk[x:x+kmer].upper() for x in range(len(chunk) - kmer + 1))]
-                
-                # conver kmers into tokens
-                chunk_token = tokenizer.texts_to_sequences(chunk)
-                # pad
-                chunk_token_padded = pad_sequences(chunk_token, maxlen = max_length, padding = 'post')
-                predictions = model.predict(chunk_token_padded)
-                if max(predictions) > 0.9:
-                    read_predictions.append(int(np.argmax(predictions, axis=1)))
-        if most_common(read_predictions) == 3:
-            right +=1
-        else:
-            wrong +=1
-    
-    acc_covid = right/(right+wrong)
-    print('acc for covid reads: ', acc_covid)
-    
-    right = 0
-    wrong = 0
-    for read in non_covid:
-        read_predictions = []
-        for chunk in read:
-            if len(chunk) >50:
-                # convert chunk into k-mers
-                chunk = [' '.join(chunk[x:x+kmer].upper() for x in range(len(chunk) - kmer + 1))]
-                
-                # conver kmers into tokens
-                chunk_token = tokenizer.texts_to_sequences(chunk)
-                # pad
-                chunk_token_padded = pad_sequences(chunk_token, maxlen = max_length, padding = 'post')
-                predictions = model.predict(chunk_token_padded)
-                if max(predictions) > 0.9:
-                    read_predictions.append(int(np.argmax(predictions, axis=1)))
-        if most_common(read_predictions) == 4:
-            right +=1
-        else:
-            wrong +=1
-    
-    acc_non_covid = right/(right+wrong)
-    print('acc for non covid reads: ', acc_non_covid)
-
-    #######
-    
-    # labes order are ['Cornidovirineae', 'Influenza', 'Metapneumovirus', 'Sars_cov_2', 'human_reads'])
-    
-    labels_predict = list(np.repeat(3, len(covid))) + \
-                     list(np.repeat(4, len(non_covid)))
-
-    sequences_predict = tokenizer.texts_to_sequences(total_sequences_predict)
-    
-    sequences_preproces_predict = pad_sequences(sequences_predict, maxlen = max_length, padding = 'post')
-
-    predictions = model.predict(sequences_preproces_predict)
-    
-    # get rid of predictions where the best prediction is lower than 0.5
-    labels_high_acc = []
-    predictions_high_acc = []
-    for i in enumerate(predictions):
-        if max(i[1]) > 0.9:
-            predictions_high_acc.append(i[1])
-            labels_high_acc.append(labels_predict[i[0]])
-            
-    predictions_high_acc = np.array(predictions_high_acc)
-    predictions_argmax = np.argmax(predictions_high_acc, axis=1)
-
-    accuracy_validation = accuracy(np.array(labels_high_acc), predictions_argmax)
-    
-    results = []
-    for i in enumerate(labels_high_acc):
-        results.append((i[1], predictions_argmax[i[0]]))
-        
-    
-    
-
-
-
-
-
-
-
-
 
 
 
