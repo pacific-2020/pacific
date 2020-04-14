@@ -111,8 +111,6 @@ z <- droplevels(z)
 z <- select(z, -empty)
 
 
-
-
 ##consolidate host information
 z <- z %>% mutate(potentialhosts = case_when( .$potentialhosts == "vertebrates,human" ~ "human,vertebrates", is.na(.$potentialhosts) ~ "Unknown", .$potentialhosts == "vertebrates,invertebrates,human" ~ "human,invertebrates,vertebrates", .$potentialhosts == "invertebrates,vertebrates" ~ "vertebrates,invertebrates", TRUE ~ as.character(.$potentialhosts))) %>% mutate(potentialhosts = as.factor(potentialhosts))
 
@@ -121,8 +119,29 @@ spectab <- data.frame(table(z$taxid))
 colnames(spectab) <- c("taxid", "genomes")
 spectab$taxid <- as.integer(as.character(spectab$taxid))
 
+selectrepresentative <- function(tid) {
+  ##if only one genome for the taxid, use it as representative
+  if (nrow(z %>% filter(taxid == tid)) == 1) {
+    return(z %>% filter(taxid == tid) %>% .$uid)
+  }
+  else {
+    ## if there is no refseq entry for the genome, then use one of the latest genbank release as the representative
+    if (nrow(z %>% filter(taxid == tid & synonym.similarity == "identical")) == 0) {
+      return((z %>% filter(taxid == tid) %>% arrange(desc(asmreleasedate_genbank)) %>% .$uid)[1])
+    } 
+    ## if there is refseq entry for the genome, then use one of the latest genbank release as the representative
+    else if (nrow(z %>% filter(taxid == tid & synonym.similarity == "identical")) >= 1) {
+      return((z %>% filter(taxid == tid & synonym.similarity == "identical") %>% arrange(desc(asmreleasedate_genbank)) %>% .$uid)[1])
+    }
+    ## flag errors if something is amiss
+    else {
+      return("something is wrong")
+    }
+  }
+}
+spectab$representative <- unlist(lapply(spectab$taxid, selectrepresentative))
+z <- z %>% mutate(isrep = case_when( .$uid %in% spectab$representative ~ "taxrep", TRUE ~ "nontaxrep"))
+
 ##create sqlite database for later use
 db = dbConnect(SQLite(), dbname="/media/dstore/covid19/ncbi.virus.20200409.sqlite")
 dbWriteTable(db, "assembly", z)
-
-
