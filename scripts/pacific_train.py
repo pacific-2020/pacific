@@ -164,7 +164,7 @@ if __name__ == '__main__':
         pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
     '''
     # loading
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer .pickle', 'rb') as handle:
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer2.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
     '''
     
@@ -203,15 +203,9 @@ if __name__ == '__main__':
                      activation='relu',
                      strides=1))
     model.add(MaxPooling1D(pool_size=pool_size))
-    model.add(Conv1D(filters,
-                     kernel_size,
-                     padding='valid',
-                     activation='relu',
-                     strides=1))
-    model.add(MaxPooling1D(pool_size=pool_size))
     # Bidirectional LSTMs
     model.add(Bidirectional(CuDNNLSTM(lstm_output_size)))
-    model.add(Dense(50, activation='relu'))
+    model.add(Dense(50))
     model.add(Dense(6))
     model.add(Activation('softmax'))
     

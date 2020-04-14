@@ -84,14 +84,14 @@ def accuracy(labels, predictions):
 if __name__ == '__main__':
 
     # keras load model
-    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/new_pacific.h5")
+    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific2.h5")
     
     # Keras loading sequences tokenizer 
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.pickle', 'rb') as handle:
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer2.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
         
     # loading label maker
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.pickle', 'rb') as handle:
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker2.pickle', 'rb') as handle:
         label_maker = pickle.load(handle)
     
     #### Test with real data
