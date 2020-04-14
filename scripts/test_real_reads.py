@@ -84,7 +84,7 @@ def accuracy(labels, predictions):
 if __name__ == '__main__':
 
     # keras load model
-    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.h5")
+    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/new_pacific.h5")
     
     # Keras loading sequences tokenizer 
     with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.pickle', 'rb') as handle:
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     #### Test with real data
     
     # short illumina covid reads
-    path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/processed/'
+    path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/'
     files = os.listdir(path)
     files_covid = [i for i in files if i.endswith('filtered_covid.sam.fastq')]
     
@@ -137,7 +137,7 @@ if __name__ == '__main__':
     ####################################==============================================
     
     ### test with Human data
-    path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/processed/'
+    path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/'
     files = os.listdir(path)
     files_non_covid = [i for i in files if i.endswith('non_covid.sam.fastq')]
     
@@ -154,7 +154,7 @@ if __name__ == '__main__':
     
     host_reads = tokenizer.texts_to_sequences(host_reads)
     
-    host_reads = pad_sequences(host_reads, maxlen = max_length, padding = 'post')
+    host_reads = pad_sequences(host_reads, maxlen = max_length, padding = 'post')   
 
     predictions_host = model.predict(host_reads)
     
