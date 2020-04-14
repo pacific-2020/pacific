@@ -13,6 +13,8 @@ from Bio import SeqIO
 import random
 import os
 
+import keras.backend as K
+
 from sklearn.preprocessing import LabelBinarizer
 import numpy as np
 from keras.preprocessing.text import Tokenizer

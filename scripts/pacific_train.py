@@ -44,7 +44,7 @@ def prepare_read(trancriptome):
     return sequences
 
 
-def process_reads(sequences, number_reads, length, kmer):
+def process_reads(sequences, length, kmer):
     '''
     '''
     r_reads = []
@@ -55,7 +55,7 @@ def process_reads(sequences, number_reads, length, kmer):
     return r_reads
 
 
-def main(directory, number_reads, size_lenght, k_mer_size):
+def main(directory, size_lenght, k_mer_size):
     '''
     '''
     files = os.listdir(directory)
@@ -63,7 +63,6 @@ def main(directory, number_reads, size_lenght, k_mer_size):
     for file in files:
         all_transcripts = prepare_read(directory+'/'+file)
         reads += process_reads(all_transcripts, 
-                               number_reads, 
                                size_lenght,
                                k_mer_size)
     return reads 
@@ -100,17 +99,17 @@ if __name__ == '__main__':
     
     # make synthetic reads
     Cornidovirineae_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Cornidovirineae',
-                                         1, read_lenght, 4)
+                                 read_lenght, 4)
     Influenza_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Influenza',
-                                         1, read_lenght, 4)
+                           read_lenght, 4)
     Metapneumovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Metapneumovirus',
-                                         1, read_lenght, 4)
+                                 read_lenght, 4)
     Rhinovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Rhinovirus',
-                                         1, read_lenght, 4)
+                            read_lenght, 4)
     Sars_cov_2_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Sars_cov_2',
-                                         1, read_lenght, 4)
+                            read_lenght, 4)
     Human = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Human',
-                                         1, read_lenght, 4) 
+                 read_lenght, 4) 
 
     total_sequences =  Cornidovirineae_reads + \
                        Influenza_reads +\
@@ -228,9 +227,6 @@ if __name__ == '__main__':
     model.save("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.h5")
     print("Saved model to disk")
     
-
-
-
 
 
 

@@ -48,16 +48,77 @@ def random_reads(sequences, number_reads, length, file):
 
 
 
-path_human = '/media/labuser/Data/COVID-19_classifier/pacific/data/human/Homo_sapiens.GRCh38.cdna.e99.canonicaltranscripts.fa'
+def main(path, depth, out):
+        
+    path_in = path
+    genome = parse_fastq(path_in)
+    
+    total_lenght = int(len(''.join(genome))/150)
+    coverage = 5
+    total_reads  = coverage * total_lenght
+    
+    path_out = out
+    random_reads(human_cds, total_reads, 150, path_out)
+    
+    return True
+
+
+    
+##### Corniviridae
+
+path_human = '/media/labuser/Data/COVID-19_classifier/pacific/data/custom_references/Rhinovirus/custom_reference_Rhinovirus.fasta'
 human_cds = parse_fastq(path_human)
 
 total_lenght = int(len(''.join(human_cds))/150)
-coverage = 5
+coverage = 150
 total_reads  = coverage * total_lenght
+print('Total number of reads', total_reads)
 
 path_out = '/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Human/human_synthetic.fasta'
 
 random_reads(human_cds, total_reads, 150, path_out)
+
+
+
+main('/media/labuser/Data/COVID-19_classifier/pacific/data/custom_references/Cornidovirineae/custom_reference_Cornidovirineae.fasta',
+     50,
+      '/media/labuser/Data/COVID-19_classifier/pacific/data/new_synthetic_reads/Cornidovirineae/Cornidovirineae_synthetic.fasta')
+
+
+main('/media/labuser/Data/COVID-19_classifier/pacific/data/custom_references/Influenza/custom_reference_Influenza.fasta',
+     80,
+      '/media/labuser/Data/COVID-19_classifier/pacific/data/new_synthetic_reads/Influenza/Influenza_synthetic.fasta')
+
+
+main('/media/labuser/Data/COVID-19_classifier/pacific/data/custom_references/Rhinovirus/custom_reference_Rhinovirus.fasta',
+     150,
+      '/media/labuser/Data/COVID-19_classifier/pacific/data/new_synthetic_reads/Rhinovirus/Rhinovirus_synthetic.fasta')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
