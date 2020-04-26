@@ -20,8 +20,8 @@ from sklearn.model_selection import train_test_split
 from keras.preprocessing.sequence import pad_sequences
 
 from keras.models import Sequential
-from keras.layers import Embedding, LSTM, Dense, Bidirectional, Conv1D, CuDNNLSTM
-from keras.layers import Dropout, Activation, MaxPooling1D
+from keras.layers import Embedding, LSTM, Dense, Bidirectional, Conv1D, CuDNNLSTM, GRU
+from keras.layers import Dropout, Activation, MaxPooling1D, Flatten
 import tensorflow as tf
 
 from numpy.random import seed
@@ -98,17 +98,17 @@ if __name__ == '__main__':
     read_lenght = 150
     
     # make synthetic reads
-    Cornidovirineae_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Cornidovirineae',
+    Cornidovirineae_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Cornidovirineae',
                                  read_lenght, 4)
-    Influenza_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Influenza',
+    Influenza_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Influenza',
                            read_lenght, 4)
-    Metapneumovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Metapneumovirus',
+    Metapneumovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Metapneumovirus',
                                  read_lenght, 4)
-    Rhinovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Rhinovirus',
+    Rhinovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Rhinovirus',
                             read_lenght, 4)
-    Sars_cov_2_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Sars_cov_2',
+    Sars_cov_2_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Sars_Cov-2/',
                             read_lenght, 4)
-    Human = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetic_reads/Human',
+    Human = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Human',
                  read_lenght, 4) 
 
     total_sequences =  Cornidovirineae_reads + \
@@ -117,6 +117,15 @@ if __name__ == '__main__':
                        Rhinovirus_reads +\
                        Sars_cov_2_reads +\
                        Human
+    
+    '''
+    print(len(Cornidovirineae_reads))
+    print(len(Influenza_reads))
+    print(len(Metapneumovirus_reads))
+    print(len(Rhinovirus_reads))
+    print(len(Sars_cov_2_reads))
+    print(len(Human))
+    '''
     
     labels_to_fit = ['Cornidovirineae','Influenza',"Metapneumovirus","Rhinovirus","Sars_cov_2", 'Human']
     label_maker = LabelBinarizer()
@@ -148,20 +157,27 @@ if __name__ == '__main__':
     
     sequences_preproces, labels_proces = shuffle(sequences_preproces, labels_proces)
     
+    np.save('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/sequences.npy', sequences_preproces)
+    np.save('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/labels.npy', labels_proces)
+
+    
     with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.pickle', 'wb') as handle:
         pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    '''
+    
     # loading
     with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
-    '''
+    
     
     # Netweork parameter s
+    #sequences_preproces = np.load('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/sequences.npy') 
+    #labels_proces = np.load('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/labels.npy')
+    
     
     # Convolution
     kernel_size = 3
-    filters = 64
-    pool_size = 2
+    filters = 128
+    pool_size = 3
     
     # LSTM
     lstm_output_size = 70
@@ -178,7 +194,7 @@ if __name__ == '__main__':
     model.add(Dropout(0.20))
     model.add(Conv1D(filters,
                      kernel_size,
-                     padding='valid',
+                     padding='same',
                      activation='relu',
                      strides=1))
     model.add(MaxPooling1D(pool_size=pool_size))
@@ -196,10 +212,10 @@ if __name__ == '__main__':
     model.summary()
     
     # training time
-    start = time.clock()
+    start = time.process_time()
     
+    histories = []
     print('Train...')
-    
     for epoch in range(epochs):
         print("epoch %d" %epoch)
         #train in batches of 100k sequences
@@ -214,23 +230,42 @@ if __name__ == '__main__':
                                                              labels_batch,
                                                              test_size=0.10, 
                                                              random_state=42)
-            model.fit(X_train, y_train,
-                      batch_size=batch_size,
-                      epochs=1,
-                      validation_data=(X_test, y_test))
+            chunk_history = model.fit(X_train, y_train,
+                                      batch_size=batch_size,
+                                      epochs=1,
+                                      validation_data=(X_test, y_test))
+            histories.append(chunk_history)
     
-    score, binary_acc, categorical_acc = model.evaluate(X_test, y_test, batch_size=batch_size)
-    print('Traning time:', time.clock() - start)
-    print('Test accuracy:', binary_acc, categorical_acc, score)
+    end = time.process_time()
+    print('Traning time:', start  - end)
     
     # save keras model
-    model.save("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.h5")
+    model.save("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01.h5")
     print("Saved model to disk")
-    
 
 
-
-
+    # try a bigger network in case does not work
+    '''
+    model= Sequential()
+    model.add(Embedding(20000,32,input_length=100))
+    model.add(Conv1D(32,kernel_size=3,padding='same',activation='relu'))
+    model.add(MaxPooling1D(pool_size=3))
+    model.add(Dropout(0.3))
+    model.add(Conv1D(64,kernel_size=3,padding='same',activation='relu'))
+    model.add(MaxPooling1D(pool_size=3))
+    model.add(Dropout(0.35))
+    model.add(Conv1D(128,kernel_size=3,padding='same',activation='relu'))
+    model.add(MaxPooling1D(pool_size=3))
+    model.add(Dropout(0.4))
+    model.add(GRU(50,return_sequences=True))
+    model.add(Dropout(0.25))
+    model.add(Flatten())
+    model.add(Dense(128,activation='relu'))
+    model.add(Dropout(0.45))
+    model.add(Dense(6,activation='sigmoid'))
+    model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy'])
+    model.fit(xtrain,ytrain,batch_size=batch_size,epochs=epochs)
+    '''
 
 
 
