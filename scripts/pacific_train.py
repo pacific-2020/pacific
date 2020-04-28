@@ -30,7 +30,8 @@ import pickle
 import time
 from sklearn.utils import shuffle
 from keras.models import load_model
-
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 def prepare_read(trancriptome):
     '''
@@ -108,7 +109,7 @@ if __name__ == '__main__':
                             read_lenght, 4)
     Sars_cov_2_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Sars_Cov-2/',
                             read_lenght, 4)
-    Human = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Human',
+    Human = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Human/',
                  read_lenght, 4) 
 
     total_sequences =  Cornidovirineae_reads + \
@@ -132,7 +133,7 @@ if __name__ == '__main__':
     transfomed_label = label_maker.fit(labels_to_fit)
     
     # save label_maker
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.pickle', 'wb') as handle:
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.01.pickle', 'wb') as handle:
         pickle.dump(label_maker, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
     labels = list(np.repeat('Cornidovirineae',len(Cornidovirineae_reads))) + \
@@ -161,12 +162,12 @@ if __name__ == '__main__':
     np.save('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/labels.npy', labels_proces)
 
     
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.pickle', 'wb') as handle:
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pickle', 'wb') as handle:
         pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
     # loading
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.pickle', 'rb') as handle:
-        tokenizer = pickle.load(handle)
+    #with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pickle', 'rb') as handle:
+    #    tokenizer = pickle.load(handle)
     
     
     # Netweork parameter s
@@ -190,7 +191,7 @@ if __name__ == '__main__':
     # Define the model the model
     model = Sequential()
     #Input = Input(shape=(None,)))
-    model.add(Embedding(max_features, 50))
+    model.add(Embedding(max_features, 50, input_length=147))
     model.add(Dropout(0.20))
     model.add(Conv1D(filters,
                      kernel_size,
@@ -198,12 +199,13 @@ if __name__ == '__main__':
                      activation='relu',
                      strides=1))
     model.add(MaxPooling1D(pool_size=pool_size))
+    model.add(Dropout(0.1))
     model.add(Bidirectional(CuDNNLSTM(lstm_output_size)))
+    model.add(Dropout(0.1))
     model.add(Dense(50))
     model.add(Dense(6))
 
     model.add(Activation('softmax'))
-    
     model.compile(loss='categorical_crossentropy',
                   optimizer='adam',
                   metrics=['binary_accuracy', 
@@ -218,7 +220,7 @@ if __name__ == '__main__':
     print('Train...')
     for epoch in range(epochs):
         print("epoch %d" %epoch)
-        #train in batches of 100k sequences
+        #train in batches of 200k sequences
         for i in range(0, len(sequences_preproces), 200000):
             start, end = i, i+200000
             if end > len(sequences_preproces):
@@ -243,33 +245,121 @@ if __name__ == '__main__':
     model.save("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01.h5")
     print("Saved model to disk")
 
-
+    
     # try a bigger network in case does not work
     '''
-    model= Sequential()
-    model.add(Embedding(20000,32,input_length=100))
-    model.add(Conv1D(32,kernel_size=3,padding='same',activation='relu'))
-    model.add(MaxPooling1D(pool_size=3))
-    model.add(Dropout(0.3))
-    model.add(Conv1D(64,kernel_size=3,padding='same',activation='relu'))
-    model.add(MaxPooling1D(pool_size=3))
-    model.add(Dropout(0.35))
-    model.add(Conv1D(128,kernel_size=3,padding='same',activation='relu'))
-    model.add(MaxPooling1D(pool_size=3))
-    model.add(Dropout(0.4))
-    model.add(GRU(50,return_sequences=True))
-    model.add(Dropout(0.25))
-    model.add(Flatten())
-    model.add(Dense(128,activation='relu'))
-    model.add(Dropout(0.45))
-    model.add(Dense(6,activation='sigmoid'))
-    model.compile(loss='binary_crossentropy',optimizer='adam',metrics=['accuracy'])
-    model.fit(xtrain,ytrain,batch_size=batch_size,epochs=epochs)
+    model2 = Sequential()
+    model2.add(Embedding(max_features, 50, input_length=147))
+    model2.add(Conv1D(32,kernel_size=3,padding='same',activation='relu'))
+    model2.add(MaxPooling1D(pool_size=3))
+    model2.add(Dropout(0.2))
+    model2.add(Conv1D(64,kernel_size=3,padding='same',activation='relu'))
+    model2.add(MaxPooling1D(pool_size=3))
+    model2.add(Dropout(0.25))
+    model2.add(Conv1D(128,kernel_size=3,padding='same',activation='relu'))
+    model2.add(MaxPooling1D(pool_size=3))
+    model2.add(Dropout(0.3))
+    model2.add(Bidirectional(CuDNNLSTM(50, return_sequences=True)))
+    model2.add(Dropout(0.2))
+    model2.add(Flatten())
+    model2.add(Dense(128,activation='relu'))
+    model2.add(Dropout(0.35))
+    model2.add(Dense(6,activation='sigmoid'))
+    model2.compile(loss='categorical_crossentropy',
+                  optimizer='adam',
+                  metrics=['binary_accuracy', 
+                           'categorical_accuracy',
+                           ])
+    model2.summary()
     '''
+    
+    #### plot the accuracies and losses
+    bi_acc = []
+    cat_acc = []
+    loss = []
+    val_bi_acc = []
+    val_cat_acc = []
+    val_loss = []
+    for i in histories:
+        bi_acc.append(i.history['binary_accuracy'][0])
+        cat_acc.append(i.history['categorical_accuracy'][0])
+        loss.append(i.history['loss'][0])
+        val_bi_acc.append(i.history['val_binary_accuracy'][0])
+        val_cat_acc.append(i.history['val_categorical_accuracy'][0])
+        val_loss.append(i.history['val_loss'][0])
 
-
-
-
+    f, ax = plt.subplots( figsize=(13,9))
+    sns.lineplot(x=np.arange(120), y=np.array(bi_acc), palette="tab10", linewidth=2.5, label='Binary accuracy')
+    sns.lineplot(x=np.arange(120), y=np.array(cat_acc), palette="tab10", linewidth=2.5, label='Categorical accuracy')
+    plt.ylabel('Accuracies')
+    plt.ylabel('Accuracies')
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/trainning_accuracy_deep.pdf',
+                format='pdf',
+                dpi=1200,
+                bbox_inches='tight', pad_inches=0)
+    
+    f, ax = plt.subplots( figsize=(13,9))
+    sns.lineplot(x=np.arange(120), y=np.array(loss), palette="tab10", linewidth=2.5, label='loss')
+    plt.ylabel('Loss')
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/training_loss_deep.pdf',
+                format='pdf',
+                dpi=1200,
+                bbox_inches='tight', pad_inches=0)
+    
+    f, ax = plt.subplots( figsize=(13,9))
+    sns.lineplot(x=np.arange(120), y=np.array(val_bi_acc), palette="tab10", linewidth=2.5, label='Validation binary accuracy')
+    sns.lineplot(x=np.arange(120), y=np.array(val_cat_acc), palette="tab10", linewidth=2.5, label='Validation categorical accuracy')
+    plt.ylabel('Percentage of predicted reads')
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/val_training_accuracy_deep.pdf',
+                format='pdf',
+                dpi=1200,
+                bbox_inches='tight', pad_inches=0)
+    
+    f, ax = plt.subplots( figsize=(13,9))
+    sns.lineplot(x=np.arange(120), y=np.array(val_loss), palette="tab10", linewidth=2.5, label='Validation loss')
+    plt.ylabel('Loss')
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/val_loss_deep.pdf',
+                format='pdf',
+                dpi=1200,
+                bbox_inches='tight', pad_inches=0)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 
 
