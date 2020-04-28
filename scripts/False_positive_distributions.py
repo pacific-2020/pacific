@@ -100,13 +100,31 @@ def test_false_positives(virus_class, predictions_class, predictions_outside_cla
         sns.distplot(false_positives, kde=False, bins=50, label='false positives')
         plt.xlabel('Predicted probabilities')
         plt.legend()
-        plt.ylim(0, 7000)
+        plt.ylim(0, 40000)
         plt.xlim(0.7, 1)
-        plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_'+virus_class+'_0.5_illumina_synthetic_distributions.pdf',
+        plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_'+virus_class+'_0.5_illumina_synthetic_distributions_large.pdf',
                     format='pdf',
                     dpi=1200,
                     bbox_inches='tight', pad_inches=0)
     return true_positives, false_positives
+
+
+def percentile_proportion(virus_class, predictions_class, predictions_outside_class, threshold):
+    '''
+    '''
+    label = np.argmax(label_maker.transform([virus_class]))
+    false_positives = 0
+    Total = 0
+    for i in enumerate(predictions_outside_class):
+        if np.max(i[1]) >= threshold:
+            if  np.argmax(i[1]) == label: # if True Negative
+                false_positives += 1
+            else:
+                Total +=1
+    
+    print(Total)
+    print(false_positives)
+    return (100/Total)*false_positives
 
 
 if __name__ == '__main__':
@@ -176,7 +194,7 @@ if __name__ == '__main__':
     predictinos_Human = model.predict(Human_reads)
     
     
-    
+    # Make plots True positive vs False positives
     true_influenza, false_influenza = test_false_positives('Influenza', 
                                                            predictinos_influenza, 
                                                            np.concatenate((
@@ -236,11 +254,70 @@ if __name__ == '__main__':
                                                                    predictinos_Rhinovirus,
                                                                    predictinos_SARS_CoV_2),axis=0),
                                                            'plot')
+                                                   
+                                                   
+    ## stablish cutoff
+    
+    Influenza_p95_proportion = percentile_proportion('Influenza', 
+                                                           predictinos_influenza, 
+                                                           np.concatenate((
+                                                                           predictinos_Cornidovirineae,
+                                                                           predictinos_Metapneumovirus,
+                                                                           predictinos_Rhinovirus,
+                                                                           predictinos_SARS_CoV_2,
+                                                                           predictinos_Human),axis=0),
+                                                                           0.95)
+    
+    Cornidovirineae_p95_proportion = percentile_proportion('Cornidovirineae', 
+                                                                       predictinos_Cornidovirineae, 
+                                                                       np.concatenate((
+                                                                           predictinos_influenza,
+                                                                           predictinos_Metapneumovirus,
+                                                                           predictinos_Rhinovirus,
+                                                                           predictinos_SARS_CoV_2,
+                                                                           predictinos_Human),axis=0),
+                                                                           0.95)
+    
+    Metapneumovirus_p95_proportion = percentile_proportion('Metapneumovirus', 
+                                                                       predictinos_Metapneumovirus, 
+                                                                       np.concatenate((
+                                                                           predictinos_influenza,
+                                                                           predictinos_Cornidovirineae,
+                                                                           predictinos_Rhinovirus,
+                                                                           predictinos_SARS_CoV_2,
+                                                                           predictinos_Human),axis=0),
+                                                                           0.95)
+    
+    Rhinovirus_p95_proportion = percentile_proportion('Rhinovirus', 
+                                                              predictinos_Rhinovirus, 
+                                                              np.concatenate((
+                                                                           predictinos_influenza,
+                                                                           predictinos_Cornidovirineae,
+                                                                           predictinos_Metapneumovirus,
+                                                                           predictinos_SARS_CoV_2,
+                                                                           predictinos_Human),axis=0),
+                                                                           0.95)
+    
+    SARS_CoV_2_p95_proportion = percentile_proportion('Sars_cov_2',
+                                                             predictinos_SARS_CoV_2,
+                                                             np.concatenate((
+                                                                           predictinos_influenza,
+                                                                           predictinos_Cornidovirineae,
+                                                                           predictinos_Metapneumovirus,
+                                                                           predictinos_Rhinovirus,
+                                                                           predictinos_Human),axis=0),
+                                                                           0.95)
+    
+    Human_p95_proportion = percentile_proportion('Human',
+                                                   predictinos_Human,
+                                                   np.concatenate((
+                                                                   predictinos_influenza,
+                                                                   predictinos_Cornidovirineae,
+                                                                   predictinos_Metapneumovirus,
+                                                                   predictinos_Rhinovirus,
+                                                                   predictinos_SARS_CoV_2),axis=0),
+                                                                   0.95)
 
-    
-    
-    
-    
     
     
     
