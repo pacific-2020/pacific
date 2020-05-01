@@ -12,7 +12,7 @@ import random
 import os
 
 import numpy as np
-
+import pandas as pd
 from keras.preprocessing.sequence import pad_sequences
 import tensorflow as tf
 
@@ -177,6 +177,32 @@ def make_plot(predictions_high_acc, virus_group):
     print(y)
     return True
 
+def make_heatmap(virus_sequences, virus, threshold):
+    '''
+    '''
+    reads = tokenizer.texts_to_sequences(virus_sequences)
+    max_length =150
+    reads = pad_sequences(reads, maxlen = max_length, padding = 'post')
+    predictions = model.predict(reads)
+    
+    # get rid of predictions where the best prediction is lower than 0.5
+    predictions_high_acc = []
+    for i in enumerate(predictions):
+        if max(i[1]) > threshold:
+            predictions_high_acc.append(i[1].tolist())
+       
+    predictions_high_acc = np.argmax(predictions_high_acc, axis=1)
+    
+    Cornidovirineae = len(predictions_high_acc[predictions_high_acc == 0]) / len(predictions_high_acc) * 100
+    Human =len(predictions_high_acc[ predictions_high_acc == 1]) / len(predictions_high_acc) * 100
+    Influenza = len(predictions_high_acc[ predictions_high_acc == 2]) / len(predictions_high_acc) * 100
+    Metapneumovirus = len(predictions_high_acc[ predictions_high_acc == 3]) / len(predictions_high_acc) * 100
+    Rhinovirus = len(predictions_high_acc[ predictions_high_acc == 4]) / len(predictions_high_acc) * 100
+    Sars_cov_2 =  len(predictions_high_acc[ predictions_high_acc == 5]) / len(predictions_high_acc) * 100
+    
+    return [Human, Cornidovirineae, Influenza, Metapneumovirus, Rhinovirus, Sars_cov_2]
+
+
 
 if __name__ == '__main__':
     
@@ -214,21 +240,38 @@ if __name__ == '__main__':
     exp_SRR11412227 = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/SRR11412227.fastq'
     
     ## illumina reads 
-    Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/novaseq_reads_Cornidoviridae.fastq'
-    Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Influenza/novaseq_reads_Influenza.fastq'
-    Metapneumovirus_path  = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Metapneumovirus/novaseq_reads_Metapneumovirus.fastq'
-    Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Rhinovirus/novaseq_reads_rhinovirus.fastq'
-    SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Sars-CoV-2/novaseq_reads_sars-cov-2.fastq'
-    Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Human/novaseq_reads_Human.fastq'
+    Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/novaseq_reads_Cornidoviridae_1M.fastq'
+    Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Influenza/novaseq_reads_Influenza_1M.fastq'
+    Metapneumovirus_path  = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Metapneumovirus/novaseq_reads_Metapneumovirus_1M.fastq'
+    Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Rhinovirus/novaseq_reads_Rhinovirus_1M.fastq'
+    SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Sars-CoV-2/novaseq_reads_sars-cov-2_1M.fastq'
+    Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Human/novaseq_reads_Human_1M.fastq'
     
-    influenza = main_illumina(Influenza_path, 100000, 150, 4, 'fastq')
-    Cornidovirineae = main_illumina(Cornidovirineae_path, 100000, 150, 4, 'fastq')
-    Metapneumovirus = main_illumina(Metapneumovirus_path, 100000, 150, 4, 'fastq')
-    Rhinovirus = main_illumina(Rhinovirus_path, 100000, 150, 4, 'fastq')
-    SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 100000, 150, 4, 'fastq')
-    Human = main_illumina(Human_path, 100000, 150, 4, 'fastq')
+    influenza = main_illumina(Influenza_path, 300000, 150, 4, 'fastq')
+    Cornidovirineae = main_illumina(Cornidovirineae_path, 300000, 150, 4, 'fastq')
+    Metapneumovirus = main_illumina(Metapneumovirus_path, 300000, 150, 4, 'fastq')
+    Rhinovirus = main_illumina(Rhinovirus_path, 300000, 150, 4, 'fastq')
+    SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 300000, 150, 4, 'fastq')
+    Human = main_illumina(Human_path, 300000, 150, 4, 'fastq')
+    
+
+    column_Influenza = make_heatmap(influenza, 'Influenza', 0.5)
+    column_Cornidovirineae = make_heatmap(Cornidovirineae, 'Cornidovirineae', 0.5)
+    column_Metapneumovirus = make_heatmap(Metapneumovirus, 'Metapneumovirus', 0.5)
+    column_Rhinovirus = make_heatmap(Rhinovirus, 'Rhinovirus', 0.5)
+    column_Sars_cov_2 = make_heatmap(SARS_CoV_2, 'Sars_cov_2', 0.5)
+    column_Human = make_heatmap(Human, 'Human', 0.5)
+    
+    df_PFR = pd.DataFrame({'Human':column_Human,
+                           'Cornidovirineae': column_Cornidovirineae,
+                           'Influenza': column_Influenza,
+                           'Metapneumovirus':column_Metapneumovirus,
+                           'Rhinovirus': column_Rhinovirus,
+                           'Sars_cov_2':column_Sars_cov_2})
     
     
+    
+
     test_predictions(influenza, 'Influenza', 0.5)
     test_predictions(Cornidovirineae, 'Cornidovirineae', 0.5)
     test_predictions(Metapneumovirus, 'Metapneumovirus', 0.5)
@@ -236,6 +279,27 @@ if __name__ == '__main__':
     test_predictions(SARS_CoV_2, 'Sars_cov_2', 0.5)
     test_predictions(Human, 'Human', 0.5)
 
-    
-    
-    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
