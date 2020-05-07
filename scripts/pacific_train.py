@@ -95,23 +95,27 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
     
+    
+    pacific_9mers = 'pacific_9mers'
+    kmers = 9
+    
     # Read lenght
     read_lenght = 150
     
     # make synthetic reads
     Cornidovirineae_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Cornidovirineae',
-                                 read_lenght, 4)
+                                 read_lenght, kmers)
     Influenza_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Influenza',
-                           read_lenght, 4)
+                           read_lenght, kmers)
     Metapneumovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Metapneumovirus',
-                                 read_lenght, 4)
+                                 read_lenght, kmers)
     Rhinovirus_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Rhinovirus',
-                            read_lenght, 4)
+                            read_lenght, kmers)
     Sars_cov_2_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Sars_Cov-2/',
-                            read_lenght, 4)
+                            read_lenght, kmers)
     Human = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Human/',
-                 read_lenght, 4) 
-
+                 read_lenght, kmers)
+    
     total_sequences =  Cornidovirineae_reads + \
                        Influenza_reads +\
                        Metapneumovirus_reads +\
@@ -119,21 +123,13 @@ if __name__ == '__main__':
                        Sars_cov_2_reads +\
                        Human
     
-    '''
-    print(len(Cornidovirineae_reads))
-    print(len(Influenza_reads))
-    print(len(Metapneumovirus_reads))
-    print(len(Rhinovirus_reads))
-    print(len(Sars_cov_2_reads))
-    print(len(Human))
-    '''
     
     labels_to_fit = ['Cornidovirineae','Influenza',"Metapneumovirus","Rhinovirus","Sars_cov_2", 'Human']
     label_maker = LabelBinarizer()
     transfomed_label = label_maker.fit(labels_to_fit)
     
     # save label_maker
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.01.pickle', 'wb') as handle:
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.01.'+pacific_9mers+'.pickle', 'wb') as handle:
         pickle.dump(label_maker, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
     labels = list(np.repeat('Cornidovirineae',len(Cornidovirineae_reads))) + \
@@ -158,23 +154,24 @@ if __name__ == '__main__':
     
     sequences_preproces, labels_proces = shuffle(sequences_preproces, labels_proces)
     
-    np.save('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/sequences.npy', sequences_preproces)
-    np.save('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/labels.npy', labels_proces)
+    #np.save('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/sequences_'+str(kmers)+'.npy', sequences_preproces)
+    #np.save('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/labels_'+str(kmers)+'.npy', labels_proces)
 
-    
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pickle', 'wb') as handle:
-        pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    #with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.'+pacific_9mers+'.pickle', 'wb') as handle:
+    #    pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
     # loading
-    #with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pickle', 'rb') as handle:
-    #    tokenizer = pickle.load(handle)
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.'+pacific_9mers+'.pickle', 'rb') as handle:
+        tokenizer = pickle.load(handle)
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.01.'+pacific_9mers+'.pickle', 'rb') as handle:
+        label_maker = pickle.load(handle)
     
+    # Netweork parameters
+    sequences_preproces = np.load('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/sequences_'+str(kmers)+'.npy') 
+    labels_proces = np.load('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/labels_'+str(kmers)+'.npy')
     
-    # Netweork parameter s
-    #sequences_preproces = np.load('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/sequences.npy') 
-    #labels_proces = np.load('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/labels.npy')
-    
-    
+    sequences_preproces, labels_proces = shuffle(sequences_preproces, labels_proces)
+
     # Convolution
     kernel_size = 3
     filters = 128
@@ -185,13 +182,12 @@ if __name__ == '__main__':
     
     # Training
     batch_size = 30
-    epochs = 2
+    epochs = 1
     
     
     # Define the model the model
     model = Sequential()
-    #Input = Input(shape=(None,)))
-    model.add(Embedding(max_features, 50, input_length=147))
+    model.add(Embedding(max_features, 100, input_length=sequences_preproces.shape[1]))
     model.add(Dropout(0.20))
     model.add(Conv1D(filters,
                      kernel_size,
@@ -242,7 +238,7 @@ if __name__ == '__main__':
     print('Traning time:', start  - end)
     
     # save keras model
-    model.save("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01.h5")
+    model.save("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01."+pacific_9mers+".h5")
     print("Saved model to disk")
 
     
@@ -289,36 +285,36 @@ if __name__ == '__main__':
         val_loss.append(i.history['val_loss'][0])
 
     f, ax = plt.subplots( figsize=(13,9))
-    sns.lineplot(x=np.arange(120), y=np.array(bi_acc), palette="tab10", linewidth=2.5, label='Binary accuracy')
-    sns.lineplot(x=np.arange(120), y=np.array(cat_acc), palette="tab10", linewidth=2.5, label='Categorical accuracy')
+    sns.lineplot(x=np.arange(len(histories)), y=np.array(bi_acc), palette="tab10", linewidth=2.5, label='Binary accuracy')
+    sns.lineplot(x=np.arange(len(histories)), y=np.array(cat_acc), palette="tab10", linewidth=2.5, label='Categorical accuracy')
     plt.ylabel('Accuracies')
     plt.ylabel('Accuracies')
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/trainning_accuracy_deep.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/trainning_accuracy_deep'+pacific_9mers+'.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
     
     f, ax = plt.subplots( figsize=(13,9))
-    sns.lineplot(x=np.arange(120), y=np.array(loss), palette="tab10", linewidth=2.5, label='loss')
+    sns.lineplot(x=np.arange(len(histories)), y=np.array(loss), palette="tab10", linewidth=2.5, label='loss')
     plt.ylabel('Loss')
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/training_loss_deep.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/training_loss_deep'+pacific_9mers+'.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
     
     f, ax = plt.subplots( figsize=(13,9))
-    sns.lineplot(x=np.arange(120), y=np.array(val_bi_acc), palette="tab10", linewidth=2.5, label='Validation binary accuracy')
-    sns.lineplot(x=np.arange(120), y=np.array(val_cat_acc), palette="tab10", linewidth=2.5, label='Validation categorical accuracy')
+    sns.lineplot(x=np.arange(len(histories)), y=np.array(val_bi_acc), palette="tab10", linewidth=2.5, label='Validation binary accuracy')
+    sns.lineplot(x=np.arange(len(histories)), y=np.array(val_cat_acc), palette="tab10", linewidth=2.5, label='Validation categorical accuracy')
     plt.ylabel('Percentage of predicted reads')
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/val_training_accuracy_deep.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/val_training_accuracy_deep'+pacific_9mers+'.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
     
     f, ax = plt.subplots( figsize=(13,9))
-    sns.lineplot(x=np.arange(120), y=np.array(val_loss), palette="tab10", linewidth=2.5, label='Validation loss')
+    sns.lineplot(x=np.arange(len(histories)), y=np.array(val_loss), palette="tab10", linewidth=2.5, label='Validation loss')
     plt.ylabel('Loss')
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/val_loss_deep.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/val_loss_deep'+pacific_9mers+'.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)

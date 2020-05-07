@@ -65,22 +65,6 @@ def main_illumina(file, number_reads, size_lenght, k_mer_size, file_type):
     return reads 
 
 
-def accuracy(labels, predictions):
-    '''
-    calculate accuracy
-    '''
-    if labels.shape != predictions.shape:
-        print('labels and predictions does not have same dimentions')
-        return False
-    
-    correct = 0
-    for i in range(len(labels)):
-        if labels[i] == predictions[i]:
-            correct +=1
-    
-    return correct/len(labels)
-
-
 def percentile_proportion(virus_class, predictions, threshold):
     '''
     '''
@@ -140,6 +124,16 @@ if __name__ == '__main__':
     SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Sars-CoV-2/novaseq_reads_sars-cov-2_1M.fastq'
     Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Human/novaseq_reads_Human_1M.fastq'
     
+    
+    ## Real reads 
+    Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Cornidovirineae/alignment/SRR3742834_filter.fastq'
+    Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Influenza/alingment/SRR1577743_filtered.fastq'
+    Metapneumovirus_path  = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Metapneumovirus/alignment/SRR8787081.fastq'
+    Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Rhinovirus/alignment/SRR8356904_filtered.fastq'
+    SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/all_filtered_covid.sam.fastq'
+    Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/all_filtered_non_covid.sam.fastq'
+    
+    
     influenza = main_illumina(Influenza_path, 50000, 150, 4, 'fastq')
     Cornidovirineae = main_illumina(Cornidovirineae_path, 50000, 150, 4, 'fastq')
     SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 50000, 150, 4, 'fastq')
@@ -179,11 +173,11 @@ if __name__ == '__main__':
     for percentage in percentages:
         for virus in classes:
             print(virus)
-            virus_amount = int((500000/100)*percentage)
+            virus_amount = int(/100)*percentage)
             virus_reads = classes_dic[virus][:virus_amount]
             virus_reads = pad_sequences(tokenizer.texts_to_sequences(virus_reads), maxlen = max_length, padding = 'post')
             predictions_virus = model.predict(virus_reads)
-            idx_human = np.random.randint(492530, size=443282)
+            idx_human = np.random.randint(classes_dic[Human], size=443282)
             total_predictions = np.concatenate((predictinos_Human[idx_human,:], predictions_virus))
             
             ## look at all the proportions of reads per virus 

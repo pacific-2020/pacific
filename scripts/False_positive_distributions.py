@@ -103,9 +103,9 @@ def test_false_positives(virus_class, predictions_class, predictions_outside_cla
         sns.distplot(false_positives, kde=False, bins=50, label='false positives')
         plt.xlabel('Predicted probabilities')
         plt.legend()
-        plt.ylim(0, 40000)
+        plt.ylim(0, 1000)
         plt.xlim(0.7, 1)
-        plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_'+virus_class+'_0.5_illumina_synthetic_distributions_large.pdf',
+        plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_'+virus_class+'_0.5_illumina_synthetic_distributions_large.pdf',
                     format='pdf',
                     dpi=1200,
                     bbox_inches='tight', pad_inches=0)
@@ -153,27 +153,18 @@ if __name__ == '__main__':
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
- 
+
     # keras load model
-    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01.h5")
+    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.pacific_9mers.01.h5")
     
     # Keras loading sequences tokenizer 
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pickle', 'rb') as handle:
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pacific_9mers.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
         
     # loading label maker
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.01.pickle', 'rb') as handle:
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.01.pacific_9mers.pickle', 'rb') as handle:
         label_maker = pickle.load(handle)
     
-    
-    ## Real reads
-    Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Cornidovirineae/alignment/SRR3742834_filter.fastq'
-    Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Influenza/alingment/SRR1577743_filtered.fastq'
-    Metapneumovirus_path  = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Metapneumovirus/alignment/SRR8787081.fastq'
-    Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Rhinovirus/alignment/SRR8356904_filtered.fastq'
-    SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/all_filtered_covid.sam.fastq'
-    Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/all_filtered_non_covid.sam.fastq'
-    exp_SRR11412227 = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/SRR11412227.fastq'
     
     ## illumina reads 
     Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/novaseq_reads_Cornidoviridae_1M.fastq'
@@ -183,14 +174,14 @@ if __name__ == '__main__':
     SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Sars-CoV-2/novaseq_reads_sars-cov-2_1M.fastq'
     Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Human/novaseq_reads_Human_1M.fastq'
     
-    influenza = main_illumina(Influenza_path, 1000000, 150, 4, 'fastq')
-    Cornidovirineae = main_illumina(Cornidovirineae_path, 1000000, 150, 4, 'fastq')
-    Metapneumovirus = main_illumina(Metapneumovirus_path, 1000000, 150, 4, 'fastq')
-    Rhinovirus = main_illumina(Rhinovirus_path, 1000000, 150, 4, 'fastq')
-    SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 1000000, 150, 4, 'fastq')
-    Human = main_illumina(Human_path, 1000000, 150, 4, 'fastq')
+    influenza = main_illumina(Influenza_path, 100000, 150, 4, 'fastq')
+    Cornidovirineae = main_illumina(Cornidovirineae_path, 100000, 150, 4, 'fastq')
+    Metapneumovirus = main_illumina(Metapneumovirus_path, 100000, 150, 4, 'fastq')
+    Rhinovirus = main_illumina(Rhinovirus_path, 100000, 150, 4, 'fastq')
+    SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 100000, 150, 4, 'fastq')
+    Human = main_illumina(Human_path, 100000, 150, 4, 'fastq')
     
-    max_length = 150
+    max_length = 142
 
     influenza_reads = pad_sequences(tokenizer.texts_to_sequences(influenza), maxlen = max_length, padding = 'post')
     Cornidovirineae_reads = pad_sequences(tokenizer.texts_to_sequences(Cornidovirineae), maxlen = max_length, padding = 'post')
@@ -269,8 +260,7 @@ if __name__ == '__main__':
                                                            'plot')
                                                    
                                                    
-    ## stablish cutoff experiments taking random combinations of viruses and human reads also at random putting 90% of reads from one group
-    # I will prepare different proportion of viruses for each class, because some classes do not give false positives and other yes
+    ## 
     
     proportions_Influenza = proportion_distribution('Influenza',
                                                      predictinos_Human,

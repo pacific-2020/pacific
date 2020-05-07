@@ -229,7 +229,7 @@ if __name__ == '__main__':
     influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/custom_references/'+ \
                      'Influenza/all_genome/SRR7841658_filtered.fasta'
     
-    
+    '''
     ## Real reads
     Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Cornidovirineae/alignment/SRR3742834_filter.fastq'
     Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Influenza/alingment/SRR1577743_filtered.fastq'
@@ -238,6 +238,7 @@ if __name__ == '__main__':
     SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/all_filtered_covid.sam.fastq'
     Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/all_filtered_non_covid.sam.fastq'
     exp_SRR11412227 = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/SRR11412227.fastq'
+    '''
     
     ## illumina reads 
     Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/novaseq_reads_Cornidoviridae_1M.fastq'
@@ -254,7 +255,7 @@ if __name__ == '__main__':
     SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 300000, 150, 4, 'fastq')
     Human = main_illumina(Human_path, 300000, 150, 4, 'fastq')
     
-
+    
     column_Influenza = make_heatmap(influenza, 'Influenza', 0.5)
     column_Cornidovirineae = make_heatmap(Cornidovirineae, 'Cornidovirineae', 0.5)
     column_Metapneumovirus = make_heatmap(Metapneumovirus, 'Metapneumovirus', 0.5)
