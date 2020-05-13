@@ -13,6 +13,7 @@ import os
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 
 from keras.preprocessing.sequence import pad_sequences
 import tensorflow as tf
@@ -25,7 +26,7 @@ from keras.models import load_model
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style('dark')   
-        
+sns.set()
 ##### Functions to test with real illumina reads
 
 def prepare_read_illumina(trancriptome, file_type):
@@ -46,8 +47,7 @@ def process_reads_illumina(sequences, number_reads, length, kmer):
     r_reads = []
     for i in enumerate(sequences):
         if len(i[1]) >= length and 'N' not in i[1]:
-            ### only take the second half for the bad one
-            read = i[1][length:]
+            read = i[1][:length]
             r_reads.append(' '.join(read[x:x+kmer].upper() for x in range(len(read) - kmer + 1)))
             if len(r_reads) == number_reads:
                 break
@@ -78,8 +78,7 @@ def percentile_proportion(virus_class, predictions, threshold):
             else:
                 Total +=1
     
-    print(Total)
-    print(false_positives)
+   
     return (100/Total)*false_positives
 
 
@@ -95,18 +94,18 @@ if __name__ == '__main__':
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
- 
-    # keras load model
-    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01.h5")
+    
+    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01.pacific_9mers.h5")
     
     # Keras loading sequences tokenizer 
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pickle', 'rb') as handle:
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pacific_9mers.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
         
     # loading label maker
-    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.01.pickle', 'rb') as handle:
+    with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.01.pacific_9mers.pickle', 'rb') as handle:
         label_maker = pickle.load(handle)
-    
+        
+    '''
     ## illumina reads miseq
     Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/miseq/miseq_reads_Cornidovirineae.fastq'
     Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Influenza/miseq/miseq_reads_Influenza.fastq'
@@ -114,7 +113,7 @@ if __name__ == '__main__':
     Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Rhinovirus/miseq/miseq_reads_rhinovirus.fastq'
     SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Sars-CoV-2/miseq/miseq_reads_sars-cov-2.fastq'
     Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Human/miseq/miseq_reads_human.fastq'
-        
+    '''
     
     ## illumina reads novaseq
     Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/novaseq_reads_Cornidoviridae_1M.fastq'
@@ -133,13 +132,14 @@ if __name__ == '__main__':
     SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/all_filtered_covid.sam.fastq'
     Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/all_filtered_non_covid.sam.fastq'
     
+    kmer = 9
     
-    influenza = main_illumina(Influenza_path, 50000, 150, 4, 'fastq')
-    Cornidovirineae = main_illumina(Cornidovirineae_path, 50000, 150, 4, 'fastq')
-    SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 50000, 150, 4, 'fastq')
-    Metapneumovirus = main_illumina(Metapneumovirus_path, 50000, 150, 4, 'fastq')
-    Rhinovirus = main_illumina(Rhinovirus_path, 50000, 150, 4, 'fastq')
-    Human = main_illumina(Human_path, 500000, 150, 4, 'fastq')
+    influenza = main_illumina(Influenza_path, 50000, 150, kmer, 'fastq')
+    Cornidovirineae = main_illumina(Cornidovirineae_path, 50000, 150, kmer, 'fastq')
+    SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 50000, 150, kmer, 'fastq')
+    Metapneumovirus = main_illumina(Metapneumovirus_path, 50000, 150, kmer, 'fastq')
+    Rhinovirus = main_illumina(Rhinovirus_path, 50000, 150, kmer, 'fastq')
+    Human = main_illumina(Human_path, 500000, 150, kmer, 'fastq')
     
     classes_dic = {'influenza': influenza,
                    'Cornidovirineae': Cornidovirineae, 
@@ -162,23 +162,22 @@ if __name__ == '__main__':
                'proportion_Influenza': 0.0751592
                 }
     
-    max_length = 150
+    max_length = 142
     Human_reads = pad_sequences(tokenizer.texts_to_sequences(Human), maxlen = max_length, padding = 'post')
     predictinos_Human = model.predict(Human_reads)
-    
-    percentages = [10, 5, 2.5, 1, 0.5]
-    
     percentage_results = {}
     
+    percentages = [ 2.5, 1, 0.5]
+
     for percentage in percentages:
         for virus in classes:
             print(virus)
-            virus_amount = int(/100)*percentage)
+            virus_amount = int(len(predictinos_Human)/100*percentage)
             virus_reads = classes_dic[virus][:virus_amount]
             virus_reads = pad_sequences(tokenizer.texts_to_sequences(virus_reads), maxlen = max_length, padding = 'post')
             predictions_virus = model.predict(virus_reads)
-            idx_human = np.random.randint(classes_dic[Human], size=443282)
-            total_predictions = np.concatenate((predictinos_Human[idx_human,:], predictions_virus))
+            idx_human = np.random.randint(len(predictinos_Human), size=len(predictinos_Human))
+            total_predictions = np.concatenate((predictinos_Human[idx_human,:], predictions_virus), axis=0)
             
             ## look at all the proportions of reads per virus 
             proportion_Cornidovirineae = percentile_proportion('Cornidovirineae', total_predictions, 0.95)
@@ -232,7 +231,7 @@ if __name__ == '__main__':
     sns.lineplot([0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
     plt.xticks([0.5, 1, 2.5, 5, 10])
     plt.yticks([0.5, 1, 2.5, 5, 10])
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_0.95_miseq_bad_experiments_proportions_influenza.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_influenza.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
@@ -266,7 +265,7 @@ if __name__ == '__main__':
     sns.lineplot([0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
     plt.xticks([0.5, 1, 2.5, 5, 10])
     plt.yticks([0.5, 1, 2.5, 5, 10])
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_0.95_miseq_bad_experiments_proportions_Cornidovirineae.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_Cornidovirineae.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
@@ -301,7 +300,7 @@ if __name__ == '__main__':
     sns.lineplot([0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
     plt.xticks([0.5, 1, 2.5, 5, 10])
     plt.yticks([0.5, 1, 2.5, 5, 10])
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_0.95_miseq_bad_experiments_proportions_Sars_cov_2.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_Sars_cov_2.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
@@ -335,7 +334,7 @@ if __name__ == '__main__':
     sns.lineplot([0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
     plt.xticks([0.5, 1, 2.5, 5, 10])
     plt.yticks([0.5, 1, 2.5, 5, 10])
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_0.95_miseq_bad_experiments_proportions_Rhinovirus.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_Rhinovirus.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
@@ -370,7 +369,7 @@ if __name__ == '__main__':
     sns.lineplot([0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
     plt.xticks([0.5, 1, 2.5, 5, 10])
     plt.yticks([0.5, 1, 2.5, 5, 10])
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_0.95_miseq_bad_experiments_proportions_Metapneumovirus.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_Metapneumovirus.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
@@ -419,17 +418,27 @@ if __name__ == '__main__':
                     text.set_weight('bold')
                     text.set_size(18)
         ax.xaxis.tick_top() # x axis on top
-        plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_0.95_miseq_bad_experiments_heatmap_'+name+'.pdf',
+        plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_heatmap_'+name+'.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
     
-        
-        
-        
-        
-        
+    # correlations between real and predicted
     
+    
+    real = [10, 5, 2.5, 1, 0.5, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0,
+            0,0,0,0,0, 10, 5, 2.5, 1, 0.5 ,0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0,
+            0,0,0,0,0,  0,0,0,0,0, 10, 5, 2.5, 1, 0.5, 0,0,0,0,0, 0,0,0,0,0,
+            0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 10, 5, 2.5, 1, 0.5, 0,0,0,0,0,
+            0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 10, 5, 2.5, 1, 0.5 ]
+    
+    predicted = [10, 5, 2.5, 1, 0.5, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0.0096,0.0086,0.0078,0.0075,0.009,
+                 0.0013,0.0023,0.0012,0.0012,0.0008, 9.7,4.7,2.3,0.91,0.56, 0,0,0,0,0, 0,0,0,0,0,  0.0089, 0.0088,0.0092, 0.0087,0.0068,
+                 0.0013,0.0017,0.0002,0.0012,0.0006, 0,0,0,0,0, 10, 5, 2.5, 1, 0.5, 0,0,0,0,0,  0.0067, 0.0087,0.01, 0.0085,0.0084,
+                 0.00091,0.0015,0.00014,0.00099,0.00014, 0,0,0,0,0, 0,0,0,0,0,10, 5, 2.5, 1, 0.5, 0.0075, 0.013,0.0094, 0.011, 0.01,
+                 0.0013,0.00075,0.00059,0.0014,0.0006, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 9.9, 5, 2.5, 1, 0.51]
+
+    print(stats.pearsonr(real, predicted))
     
     
     

@@ -102,7 +102,7 @@ if __name__ == '__main__':
     # Read lenght
     read_lenght = 150
     
-    # make synthetic reads
+    # get synthetic reads
     Cornidovirineae_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Cornidovirineae',
                                  read_lenght, kmers)
     Influenza_reads = main('/media/labuser/Data/COVID-19_classifier/pacific/data/synthetictrainingdata_group/Influenza',
@@ -160,13 +160,13 @@ if __name__ == '__main__':
     #with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.'+pacific_9mers+'.pickle', 'wb') as handle:
     #    pickle.dump(tokenizer, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
-    # loading
+    # loading tokenizer and label_maker
     with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.'+pacific_9mers+'.pickle', 'rb') as handle:
         tokenizer = pickle.load(handle)
     with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.01.'+pacific_9mers+'.pickle', 'rb') as handle:
         label_maker = pickle.load(handle)
     
-    # Netweork parameters
+    # loading data and labels
     sequences_preproces = np.load('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/sequences_'+str(kmers)+'.npy') 
     labels_proces = np.load('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/labels_'+str(kmers)+'.npy')
     
@@ -233,6 +233,9 @@ if __name__ == '__main__':
                                       epochs=1,
                                       validation_data=(X_test, y_test))
             histories.append(chunk_history)
+            if i == 15:
+                break
+            break
     
     end = time.process_time()
     print('Traning time:', start  - end)
@@ -241,34 +244,6 @@ if __name__ == '__main__':
     model.save("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01."+pacific_9mers+".h5")
     print("Saved model to disk")
 
-    
-    # try a bigger network in case does not work
-    '''
-    model2 = Sequential()
-    model2.add(Embedding(max_features, 50, input_length=147))
-    model2.add(Conv1D(32,kernel_size=3,padding='same',activation='relu'))
-    model2.add(MaxPooling1D(pool_size=3))
-    model2.add(Dropout(0.2))
-    model2.add(Conv1D(64,kernel_size=3,padding='same',activation='relu'))
-    model2.add(MaxPooling1D(pool_size=3))
-    model2.add(Dropout(0.25))
-    model2.add(Conv1D(128,kernel_size=3,padding='same',activation='relu'))
-    model2.add(MaxPooling1D(pool_size=3))
-    model2.add(Dropout(0.3))
-    model2.add(Bidirectional(CuDNNLSTM(50, return_sequences=True)))
-    model2.add(Dropout(0.2))
-    model2.add(Flatten())
-    model2.add(Dense(128,activation='relu'))
-    model2.add(Dropout(0.35))
-    model2.add(Dense(6,activation='sigmoid'))
-    model2.compile(loss='categorical_crossentropy',
-                  optimizer='adam',
-                  metrics=['binary_accuracy', 
-                           'categorical_accuracy',
-                           ])
-    model2.summary()
-    '''
-    
     #### plot the accuracies and losses
     bi_acc = []
     cat_acc = []

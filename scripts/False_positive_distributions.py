@@ -26,7 +26,6 @@ from keras.models import load_model
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style('dark')   
-        
 
 ##### Functions to test with real illumina reads
 
@@ -103,9 +102,9 @@ def test_false_positives(virus_class, predictions_class, predictions_outside_cla
         sns.distplot(false_positives, kde=False, bins=50, label='false positives')
         plt.xlabel('Predicted probabilities')
         plt.legend()
-        plt.ylim(0, 1000)
-        plt.xlim(0.7, 1)
-        plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_'+virus_class+'_0.5_illumina_synthetic_distributions_large.pdf',
+        plt.ylim(0, 100)
+        plt.xlim(0.3, 1)
+        plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_'+virus_class+'_0.5_illumina_synthetic_distributions_large_100.pdf',
                     format='pdf',
                     dpi=1200,
                     bbox_inches='tight', pad_inches=0)
@@ -134,11 +133,10 @@ def proportion_distribution(virus_label, virus_group, iterations, threshold):
     proportions = []
     for i in range(iterations):
         #first total number of reads for predictions between 100K and 900K
-        total_reads_n = random.randint(1000, 900000)
-        idx = np.random.randint(900000, size=total_reads_n)
+        idx = np.random.randint(500000, size=100000)
         total_reads =  virus_group[idx,:]
         proportions.append(percentile_proportion(virus_label,
-                                                 total_reads,
+                                                total_reads,
                                                  threshold))
     return proportions
 
@@ -155,7 +153,7 @@ if __name__ == '__main__':
     sess = tf.Session(config=config)
 
     # keras load model
-    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.pacific_9mers.01.h5")
+    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01.pacific_9mers.h5")
     
     # Keras loading sequences tokenizer 
     with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pacific_9mers.pickle', 'rb') as handle:
@@ -174,12 +172,14 @@ if __name__ == '__main__':
     SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Sars-CoV-2/novaseq_reads_sars-cov-2_1M.fastq'
     Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Human/novaseq_reads_Human_1M.fastq'
     
-    influenza = main_illumina(Influenza_path, 100000, 150, 4, 'fastq')
-    Cornidovirineae = main_illumina(Cornidovirineae_path, 100000, 150, 4, 'fastq')
-    Metapneumovirus = main_illumina(Metapneumovirus_path, 100000, 150, 4, 'fastq')
-    Rhinovirus = main_illumina(Rhinovirus_path, 100000, 150, 4, 'fastq')
-    SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 100000, 150, 4, 'fastq')
-    Human = main_illumina(Human_path, 100000, 150, 4, 'fastq')
+    kmer= 9 
+    
+    influenza = main_illumina(Influenza_path, 500000, 150, kmer, 'fastq')
+    Cornidovirineae = main_illumina(Cornidovirineae_path, 500000, 150, kmer, 'fastq')
+    Metapneumovirus = main_illumina(Metapneumovirus_path, 500000, 150, kmer, 'fastq')
+    Rhinovirus = main_illumina(Rhinovirus_path, 500000, 150, kmer, 'fastq')
+    SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 500000, 150, kmer, 'fastq')
+    Human = main_illumina(Human_path, 500000, 150, kmer,'fastq')
     
     max_length = 142
 
@@ -258,41 +258,62 @@ if __name__ == '__main__':
                                                                    predictinos_Rhinovirus,
                                                                    predictinos_SARS_CoV_2),axis=0),
                                                            'plot')
-                                                   
-                                                   
-    ## 
+
+    #### boostrapping of the FP to set the detection limits using other viruses
+    
+    other_virus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/rest_virus/rest_virus.fastq'
+    other_virus = main_illumina(Human_path, 1000000, 150, kmer,'fastq')
+    other_virus_reads = pad_sequences(tokenizer.texts_to_sequences(other_virus), maxlen = max_length, padding = 'post')
+    predictinos_other_virus = model.predict(other_virus_reads)
+
+    scores = {}
+    for i in predictinos_other_virus:
+        if np.argmax(i) not in scores:
+            scores[np.argmax(i)] = 1
+        else:
+            scores[np.argmax(i)] += 1
     
     proportions_Influenza = proportion_distribution('Influenza',
-                                                     predictinos_Human,
-                                                     100,
+                                                    np.concatenate((
+                                                               predictinos_Human,
+                                                               predictinos_other_virus),axis=0),
+                                                     1000,
                                                      0.95)
     
     proportions_Sars_cov_2 = proportion_distribution('Sars_cov_2',
-                                                     predictinos_Cornidovirineae,
-                                                     100,
+                                                      np.concatenate((
+                                                               predictinos_Cornidovirineae,
+                                                               predictinos_other_virus),axis=0),
+                                                     1000,
                                                      0.95)
     
     
     proportions_Cornidovirineae = proportion_distribution('Cornidovirineae',
-                                                           predictinos_Human,
-                                                            100,
+                                                            np.concatenate((
+                                                            predictinos_Human,
+                                                            predictinos_other_virus),axis=0),
+                                                            1000,
                                                             0.95)
 
     proportions_Rhinovirus = proportion_distribution('Rhinovirus',
-                                                     predictinos_Human,
-                                                     100,
+                                                      np.concatenate((
+                                                            predictinos_Human,
+                                                            predictinos_other_virus),axis=0),
+                                                     1000,
                                                      0.95)
     
     proportions_Metapneumovirus = proportion_distribution('Metapneumovirus',
-                                                           predictinos_Human,
-                                                            100,
+                                                            np.concatenate((
+                                                            predictinos_Human,
+                                                            predictinos_other_virus),axis=0),
+                                                            1000,
                                                             0.95)
     
-    influenza_name = ['Influenza']*100
-    Cornidovirineae_name = ['Cornidovirineae']*100
-    Metapneumovirus_name = ['Metapneumovirus']*100
-    Rhinovirus_name = ['Rhinovirus']*100
-    Sars_cov_2_name = ['Sars_cov_2']*100
+    influenza_name = ['Influenza']*1000
+    Cornidovirineae_name = ['Cornidovirineae']*1000
+    Metapneumovirus_name = ['Metapneumovirus']*1000
+    Rhinovirus_name = ['Rhinovirus']*1000
+    Sars_cov_2_name = ['Sars_cov_2']*1000
     
     virus = influenza_name + Cornidovirineae_name + Metapneumovirus_name + Rhinovirus_name + Sars_cov_2_name
     
@@ -304,14 +325,14 @@ if __name__ == '__main__':
     
     df_proportions = pd.DataFrame({'virus' : virus, 'FPR in the top 95 percentil': proportions})
     
-    df_proportions.to_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_0.95_illumina_in_silico_100_experiments_distributions.csv')
+    df_proportions.to_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_illumina_in_silico_100_experiments_distributions+rest_virus.csv')
     
     f, ax = plt.subplots(figsize=(13,9))
-    plt.title('FPR in-silico 100 experiments per class')
+    plt.title('FPR in-silico 1000 experiments per class')
     sns.boxplot(x="virus", y='FPR in the top 95 percentil', data=df_proportions)
     sns.swarmplot(x="virus", y='FPR in the top 95 percentil', data=df_proportions, color=".25")
     
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/FPR_0.95_illumina_in_silico_100_experiments_distributions_boxplots.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_illumina_in_silico_1000_experiments_distributions_boxplots+rest_virus.pdf',
                     format='pdf',
                     dpi=1200,
                     bbox_inches='tight', pad_inches=0)
