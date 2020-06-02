@@ -136,8 +136,10 @@ if __name__ == '__main__':
         
         sequences_GISAID = tokenizer.texts_to_sequences(GISAID)
         labels_GISAID = label_maker.transform(labels)
-    
+        
+        start = time.time()
         predictions_GISAID = model.predict(np.array(sequences_GISAID))
+        print(time.time() - start)
         
         predictions_high_acc, labels_high_acc = select_high_acc(predictions_GISAID,
                                                                 labels_GISAID,
@@ -158,7 +160,7 @@ if __name__ == '__main__':
               'Metapneumovirus', Metapneumovirus,
               'Rhinovirus', Rhinovirus,
               'Sars_cov_2', Sars_cov_2)
-       
+
 
     
     

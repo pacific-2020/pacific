@@ -3,7 +3,7 @@
 """
 Created on Sun Apr  5 21:42:12 2020
 
-Grab reads from fasta files and train the model
+This script will grab the synthetic data generated using generatetrainingdata.pl and train PACIFIC
 
 @author: labuser
 """
@@ -20,8 +20,8 @@ from sklearn.model_selection import train_test_split
 from keras.preprocessing.sequence import pad_sequences
 
 from keras.models import Sequential
-from keras.layers import Embedding, LSTM, Dense, Bidirectional, Conv1D, CuDNNLSTM, GRU
-from keras.layers import Dropout, Activation, MaxPooling1D, Flatten
+from keras.layers import Embedding, LSTM, Dense, Bidirectional, Conv1D, CuDNNLSTM
+from keras.layers import Dropout, Activation, MaxPooling1D
 import tensorflow as tf
 
 from numpy.random import seed
@@ -146,8 +146,6 @@ if __name__ == '__main__':
     tokenizer.fit_on_texts(total_sequences)
     sequences_preproces = tokenizer.texts_to_sequences(total_sequences)
     
-    max_features = len(tokenizer.word_index)+1
-    
     max_length = max([len(s.split()) for s in total_sequences])
     # pad sequences
     sequences_preproces = pad_sequences(sequences_preproces, maxlen = max_length, padding = 'post')
@@ -171,6 +169,8 @@ if __name__ == '__main__':
     labels_proces = np.load('/media/labuser/Data/COVID-19_classifier/pacific/data/training_objects/labels_'+str(kmers)+'.npy')
     
     sequences_preproces, labels_proces = shuffle(sequences_preproces, labels_proces)
+    
+    max_features = len(tokenizer.word_index)+1
 
     # Convolution
     kernel_size = 3
@@ -196,7 +196,7 @@ if __name__ == '__main__':
                      strides=1))
     model.add(MaxPooling1D(pool_size=pool_size))
     model.add(Dropout(0.1))
-    model.add(Bidirectional(CuDNNLSTM(lstm_output_size)))
+    model.add(Bidirectional(LSTM(lstm_output_size)))
     model.add(Dropout(0.1))
     model.add(Dense(50))
     model.add(Dense(6))
@@ -241,7 +241,7 @@ if __name__ == '__main__':
     print('Traning time:', start  - end)
     
     # save keras model
-    model.save("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01."+pacific_9mers+".h5")
+    model.save("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01."+pacific_9mers+"_nonGPU.h5")
     print("Saved model to disk")
 
     #### plot the accuracies and losses
@@ -264,7 +264,7 @@ if __name__ == '__main__':
     sns.lineplot(x=np.arange(len(histories)), y=np.array(cat_acc), palette="tab10", linewidth=2.5, label='Categorical accuracy')
     plt.ylabel('Accuracies')
     plt.ylabel('Accuracies')
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/trainning_accuracy_deep'+pacific_9mers+'.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/trainning_accuracy_deep'+pacific_9mers+'_nonGPU.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
@@ -272,7 +272,7 @@ if __name__ == '__main__':
     f, ax = plt.subplots( figsize=(13,9))
     sns.lineplot(x=np.arange(len(histories)), y=np.array(loss), palette="tab10", linewidth=2.5, label='loss')
     plt.ylabel('Loss')
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/training_loss_deep'+pacific_9mers+'.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/training_loss_deep'+pacific_9mers+'_nonGPU.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
@@ -281,7 +281,7 @@ if __name__ == '__main__':
     sns.lineplot(x=np.arange(len(histories)), y=np.array(val_bi_acc), palette="tab10", linewidth=2.5, label='Validation binary accuracy')
     sns.lineplot(x=np.arange(len(histories)), y=np.array(val_cat_acc), palette="tab10", linewidth=2.5, label='Validation categorical accuracy')
     plt.ylabel('Percentage of predicted reads')
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/val_training_accuracy_deep'+pacific_9mers+'.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/val_training_accuracy_deep'+pacific_9mers+'_nonGPU.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
@@ -289,7 +289,7 @@ if __name__ == '__main__':
     f, ax = plt.subplots( figsize=(13,9))
     sns.lineplot(x=np.arange(len(histories)), y=np.array(val_loss), palette="tab10", linewidth=2.5, label='Validation loss')
     plt.ylabel('Loss')
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/val_loss_deep'+pacific_9mers+'.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/val_loss_deep'+pacific_9mers+'_nonGPU.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)

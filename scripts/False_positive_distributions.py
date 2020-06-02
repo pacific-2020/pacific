@@ -165,7 +165,7 @@ if __name__ == '__main__':
     
     
     ## illumina reads 
-    Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/novaseq_reads_Cornidoviridae_1M.fastq'
+    Coronaviridae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/novaseq_reads_Cornidoviridae_1M.fastq'
     Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Influenza/novaseq_reads_Influenza_1M.fastq'
     Metapneumovirus_path  = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Metapneumovirus/novaseq_reads_Metapneumovirus_1M.fastq'
     Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Rhinovirus/novaseq_reads_Rhinovirus_1M.fastq'
@@ -175,7 +175,7 @@ if __name__ == '__main__':
     kmer= 9 
     
     influenza = main_illumina(Influenza_path, 500000, 150, kmer, 'fastq')
-    Cornidovirineae = main_illumina(Cornidovirineae_path, 500000, 150, kmer, 'fastq')
+    Coronaviridae = main_illumina(Coronaviridae_path, 500000, 150, kmer, 'fastq')
     Metapneumovirus = main_illumina(Metapneumovirus_path, 500000, 150, kmer, 'fastq')
     Rhinovirus = main_illumina(Rhinovirus_path, 500000, 150, kmer, 'fastq')
     SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 500000, 150, kmer, 'fastq')
@@ -184,14 +184,14 @@ if __name__ == '__main__':
     max_length = 142
 
     influenza_reads = pad_sequences(tokenizer.texts_to_sequences(influenza), maxlen = max_length, padding = 'post')
-    Cornidovirineae_reads = pad_sequences(tokenizer.texts_to_sequences(Cornidovirineae), maxlen = max_length, padding = 'post')
+    Coronaviridae_reads = pad_sequences(tokenizer.texts_to_sequences(Coronaviridae), maxlen = max_length, padding = 'post')
     Metapneumovirus_reads = pad_sequences(tokenizer.texts_to_sequences(Metapneumovirus), maxlen = max_length, padding = 'post' )
     Rhinovirus_reads = pad_sequences(tokenizer.texts_to_sequences(Rhinovirus), maxlen = max_length, padding = 'post')
     SARS_CoV_2_reads = pad_sequences(tokenizer.texts_to_sequences(SARS_CoV_2), maxlen = max_length, padding = 'post')
     Human_reads = pad_sequences(tokenizer.texts_to_sequences(Human), maxlen = max_length, padding = 'post')
     
     predictinos_influenza = model.predict(influenza_reads)
-    predictinos_Cornidovirineae = model.predict(Cornidovirineae_reads)
+    predictinos_Coronaviridae = model.predict(Coronaviridae_reads)
     predictinos_Metapneumovirus = model.predict(Metapneumovirus_reads)
     predictinos_Rhinovirus = model.predict(Rhinovirus_reads)
     predictinos_SARS_CoV_2 = model.predict(SARS_CoV_2_reads)
@@ -202,15 +202,15 @@ if __name__ == '__main__':
     true_influenza, false_influenza = test_false_positives('Influenza', 
                                                            predictinos_influenza, 
                                                            np.concatenate((
-                                                                           predictinos_Cornidovirineae,
+                                                                           predictinos_Coronaviridae,
                                                                            predictinos_Metapneumovirus,
                                                                            predictinos_Rhinovirus,
                                                                            predictinos_SARS_CoV_2,
                                                                            predictinos_Human),axis=0),
                                                            'plot')
     
-    true_Cornidovirineae, false_Cornidovirineae = test_false_positives('Cornidovirineae', 
-                                                                       predictinos_Cornidovirineae, 
+    true_Coronaviridae, false_Coronaviridae = test_false_positives('Coronaviridae', 
+                                                                       predictinos_Coronaviridae, 
                                                                        np.concatenate((
                                                                            predictinos_influenza,
                                                                            predictinos_Metapneumovirus,
@@ -223,7 +223,7 @@ if __name__ == '__main__':
                                                                        predictinos_Metapneumovirus, 
                                                                        np.concatenate((
                                                                            predictinos_influenza,
-                                                                           predictinos_Cornidovirineae,
+                                                                           predictinos_Coronaviridae,
                                                                            predictinos_Rhinovirus,
                                                                            predictinos_SARS_CoV_2,
                                                                            predictinos_Human),axis=0),
@@ -233,7 +233,7 @@ if __name__ == '__main__':
                                                               predictinos_Rhinovirus, 
                                                               np.concatenate((
                                                                            predictinos_influenza,
-                                                                           predictinos_Cornidovirineae,
+                                                                           predictinos_Coronaviridae,
                                                                            predictinos_Metapneumovirus,
                                                                            predictinos_SARS_CoV_2,
                                                                            predictinos_Human),axis=0),
@@ -243,7 +243,7 @@ if __name__ == '__main__':
                                                              predictinos_SARS_CoV_2,
                                                              np.concatenate((
                                                                            predictinos_influenza,
-                                                                           predictinos_Cornidovirineae,
+                                                                           predictinos_Coronaviridae,
                                                                            predictinos_Metapneumovirus,
                                                                            predictinos_Rhinovirus,
                                                                            predictinos_Human),axis=0),
@@ -253,7 +253,7 @@ if __name__ == '__main__':
                                                    predictinos_Human,
                                                    np.concatenate((
                                                                    predictinos_influenza,
-                                                                   predictinos_Cornidovirineae,
+                                                                   predictinos_Coronaviridae,
                                                                    predictinos_Metapneumovirus,
                                                                    predictinos_Rhinovirus,
                                                                    predictinos_SARS_CoV_2),axis=0),
@@ -282,13 +282,13 @@ if __name__ == '__main__':
     
     proportions_Sars_cov_2 = proportion_distribution('Sars_cov_2',
                                                       np.concatenate((
-                                                               predictinos_Cornidovirineae,
+                                                               predictinos_Coronaviridae,
                                                                predictinos_other_virus),axis=0),
                                                      1000,
                                                      0.95)
     
     
-    proportions_Cornidovirineae = proportion_distribution('Cornidovirineae',
+    proportions_Coronaviridae = proportion_distribution('Coronaviridae',
                                                             np.concatenate((
                                                             predictinos_Human,
                                                             predictinos_other_virus),axis=0),
@@ -310,15 +310,15 @@ if __name__ == '__main__':
                                                             0.95)
     
     influenza_name = ['Influenza']*1000
-    Cornidovirineae_name = ['Cornidovirineae']*1000
+    Coronaviridae_name = ['Coronaviridae']*1000
     Metapneumovirus_name = ['Metapneumovirus']*1000
     Rhinovirus_name = ['Rhinovirus']*1000
     Sars_cov_2_name = ['Sars_cov_2']*1000
     
-    virus = influenza_name + Cornidovirineae_name + Metapneumovirus_name + Rhinovirus_name + Sars_cov_2_name
+    virus = influenza_name + Coronaviridae_name + Metapneumovirus_name + Rhinovirus_name + Sars_cov_2_name
     
     proportions = proportions_Influenza  + \
-                  proportions_Cornidovirineae + \
+                  proportions_Coronaviridae + \
                   proportions_Metapneumovirus +\
                   proportions_Rhinovirus +\
                   proportions_Sars_cov_2
@@ -327,10 +327,18 @@ if __name__ == '__main__':
     
     df_proportions.to_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_illumina_in_silico_100_experiments_distributions+rest_virus.csv')
     
+    df_proportions = pd.read_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_illumina_in_silico_100_experiments_distributions+rest_virus.csv')
+       
+    #sns.set()
     f, ax = plt.subplots(figsize=(13,9))
     plt.title('FPR in-silico 1000 experiments per class')
     sns.boxplot(x="virus", y='FPR in the top 95 percentil', data=df_proportions)
-    sns.swarmplot(x="virus", y='FPR in the top 95 percentil', data=df_proportions, color=".25")
+    b = sns.swarmplot(x="virus", y='FPR in the top 95 percentil', data=df_proportions, color=".25")
+    b.axes.set_title('False positive rates for 1000 experiments', fontsize = 25)
+    b.tick_params(axis='y', labelsize=25)
+    b.tick_params(axis='x', labelsize=25, rotation=45)
+    b.set_ylabel("False positive rate",fontsize=25)
+    plt.ylabel('False positive rate', fontsize=25)
     
     plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_illumina_in_silico_1000_experiments_distributions_boxplots+rest_virus.pdf',
                     format='pdf',
@@ -338,7 +346,7 @@ if __name__ == '__main__':
                     bbox_inches='tight', pad_inches=0)
     
     print(max(df_proportions[df_proportions['virus'] =='Influenza']['FPR in the top 95 percentil']))
-    print(max(df_proportions[df_proportions['virus'] =='Cornidovirineae']['FPR in the top 95 percentil']))
+    print(max(df_proportions[df_proportions['virus'] =='Coronaviridae']['FPR in the top 95 percentil']))
     print(max(df_proportions[df_proportions['virus'] =='Metapneumovirus']['FPR in the top 95 percentil']))
     print(max(df_proportions[df_proportions['virus'] =='Rhinovirus']['FPR in the top 95 percentil']))
     print(max(df_proportions[df_proportions['virus'] =='Sars_cov_2']['FPR in the top 95 percentil']))

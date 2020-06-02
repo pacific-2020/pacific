@@ -95,7 +95,7 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
     
-    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01.pacific_9mers.h5")
+    model = load_model('/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.pacific_9mers.01.h5')
     
     # Keras loading sequences tokenizer 
     with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pacific_9mers.pickle', 'rb') as handle:
@@ -105,9 +105,9 @@ if __name__ == '__main__':
     with open('/media/labuser/Data/COVID-19_classifier/pacific/model/label_maker.01.pacific_9mers.pickle', 'rb') as handle:
         label_maker = pickle.load(handle)
         
-    '''
+    
     ## illumina reads miseq
-    Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/miseq/miseq_reads_Cornidovirineae.fastq'
+    Coronaviridae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/miseq/miseq_reads_Cornidovirineae.fastq'
     Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Influenza/miseq/miseq_reads_Influenza.fastq'
     Metapneumovirus_path  = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Metapneumovirus/miseq/miseq_reads_Metapneumovirus.fastq'
     Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Rhinovirus/miseq/miseq_reads_rhinovirus.fastq'
@@ -116,58 +116,44 @@ if __name__ == '__main__':
     '''
     
     ## illumina reads novaseq
-    Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/novaseq_reads_Cornidoviridae_1M.fastq'
+    Coronaviridae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/novaseq_reads_Cornidoviridae_1M.fastq'
     Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Influenza/novaseq_reads_Influenza_1M.fastq'
     Metapneumovirus_path  = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Metapneumovirus/novaseq_reads_Metapneumovirus_1M.fastq'
     Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Rhinovirus/novaseq_reads_Rhinovirus_1M.fastq'
     SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Sars-CoV-2/novaseq_reads_sars-cov-2_1M.fastq'
     Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Human/novaseq_reads_Human_1M.fastq'
-    
-    
-    ## Real reads 
-    Cornidovirineae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Cornidovirineae/alignment/SRR3742834_filter.fastq'
-    Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Influenza/alingment/SRR1577743_filtered.fastq'
-    Metapneumovirus_path  = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Metapneumovirus/alignment/SRR8787081.fastq'
-    Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/Rhinovirus/alignment/SRR8356904_filtered.fastq'
-    SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/all_filtered_covid.sam.fastq'
-    Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/non_synthetic/illumina/SARS_human/processed/all_filtered_non_covid.sam.fastq'
+    '''
     
     kmer = 9
     
     influenza = main_illumina(Influenza_path, 50000, 150, kmer, 'fastq')
-    Cornidovirineae = main_illumina(Cornidovirineae_path, 50000, 150, kmer, 'fastq')
+    Coronaviridae = main_illumina(Coronaviridae_path, 50000, 150, kmer, 'fastq')
     SARS_CoV_2 = main_illumina(SARS_CoV_2_path, 50000, 150, kmer, 'fastq')
     Metapneumovirus = main_illumina(Metapneumovirus_path, 50000, 150, kmer, 'fastq')
     Rhinovirus = main_illumina(Rhinovirus_path, 50000, 150, kmer, 'fastq')
     Human = main_illumina(Human_path, 500000, 150, kmer, 'fastq')
     
     classes_dic = {'influenza': influenza,
-                   'Cornidovirineae': Cornidovirineae, 
+                   'Coronaviridae': Coronaviridae, 
                    'Metapneumovirus': Metapneumovirus, 
                    'Rhinovirus': Rhinovirus,
                    'Sars_cov_2': SARS_CoV_2
                    }
          
     classes= ['influenza',
-              'Cornidovirineae', 
+              'Coronaviridae', 
               'Metapneumovirus', 
               'Rhinovirus',
               'Sars_cov_2'
                ]
 
-    cutoffs = {'proportion_Cornidovirineae': 0.250501,
-               'proportion_Metapneumovirus': 0.0335,
-               'proportion_Rhinovirus': 0.38288,
-               'proportion_SARS_CoV_2': 0.32697,
-               'proportion_Influenza': 0.0751592
-                }
     
     max_length = 142
     Human_reads = pad_sequences(tokenizer.texts_to_sequences(Human), maxlen = max_length, padding = 'post')
     predictinos_Human = model.predict(Human_reads)
     percentage_results = {}
     
-    percentages = [ 2.5, 1, 0.5]
+    percentages = [10, 5, 2.5, 1, 0.5, 0.1, 0.03]
 
     for percentage in percentages:
         for virus in classes:
@@ -180,30 +166,32 @@ if __name__ == '__main__':
             total_predictions = np.concatenate((predictinos_Human[idx_human,:], predictions_virus), axis=0)
             
             ## look at all the proportions of reads per virus 
-            proportion_Cornidovirineae = percentile_proportion('Cornidovirineae', total_predictions, 0.95)
+            proportion_Coronaviridae = percentile_proportion('Coronaviridae', total_predictions, 0.95)
             proportion_Influenza = percentile_proportion('Influenza', total_predictions, 0.95)
             proportion_SARS_CoV_2 = percentile_proportion('Sars_cov_2', total_predictions, 0.95)
             proportion_Metapneumovirus = percentile_proportion('Metapneumovirus', total_predictions, 0.95)
             proportion_Rhinovirus = percentile_proportion('Rhinovirus', total_predictions, 0.95)
             
-            percentage_results[str(percentage)+'_'+virus] = [proportion_Cornidovirineae, 
+            percentage_results[str(percentage)+'_'+virus] = [proportion_Coronaviridae, 
                                                              proportion_Influenza, 
                                                              proportion_SARS_CoV_2,
                                                              proportion_Metapneumovirus,
                                                              proportion_Rhinovirus
                                                             ]
-            print([proportion_Cornidovirineae, 
+            print([proportion_Coronaviridae, 
                  proportion_Influenza, 
                  proportion_SARS_CoV_2,
                  proportion_Metapneumovirus,
                  proportion_Rhinovirus
                 ])
     
-    
+    '''
     # make a heatmap per percentage
     
     # Influenza
     influenza_percentages = [
+                percentage_results['0.03_influenza'],
+                percentage_results['0.1_influenza'],
                 percentage_results['0.5_influenza'],
                 percentage_results['1_influenza'],
                 percentage_results['2.5_influenza'],
@@ -223,33 +211,35 @@ if __name__ == '__main__':
         Metap.append(percentage[1][3])
     
     f, ax = plt.subplots(figsize=(13,9))
-    plt.title('miseq experiments Influenza + Human different proportions')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Corno, label='Cornidovirineae')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Rhi, label= 'Rhinovirus')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Sars, label = 'Sars_cov_2')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Metap, label = 'Metapneumovirus')
-    sns.lineplot([0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
-    plt.xticks([0.5, 1, 2.5, 5, 10])
-    plt.yticks([0.5, 1, 2.5, 5, 10])
+    plt.title('Novaseq experiments Influenza + Human different proportions')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Corno, label='Coronaviridae')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Rhi, label= 'Rhinovirus')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Sars, label = 'Sars_cov_2')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Metap, label = 'Metapneumovirus')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
+    plt.xticks([0.03, 0.1, 0.5, 1, 2.5, 5, 10])
+    plt.yticks([0.03, 0.1, 0.5, 1, 2.5, 5, 10])
     plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_influenza.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
     
-    # Cornidovirineae
-    Cornidovirineae_percentages = [
-                percentage_results['0.5_Cornidovirineae'],
-                percentage_results['1_Cornidovirineae'],
-                percentage_results['2.5_Cornidovirineae'],
-                percentage_results['5_Cornidovirineae'],
-                percentage_results['10_Cornidovirineae']
+    # Coronaviridae
+    Coronaviridae_percentages = [  
+                percentage_results['0.03_Coronaviridae'],
+                percentage_results['0.1_Coronaviridae'],
+                percentage_results['0.5_Coronaviridae'],
+                percentage_results['1_Coronaviridae'],
+                percentage_results['2.5_Coronaviridae'],
+                percentage_results['5_Coronaviridae'],
+                percentage_results['10_Coronaviridae']
                 ]
     Corno = []
     Rhi = []
     Sars = []
     Influ = []
     Metap = []
-    for percentage in enumerate(Cornidovirineae_percentages):
+    for percentage in enumerate(Coronaviridae_percentages):
         Corno.append(percentage[1][0])
         Rhi.append(percentage[1][4])
         Sars.append(percentage[1][2])
@@ -257,15 +247,15 @@ if __name__ == '__main__':
         Metap.append(percentage[1][3])
     
     f, ax = plt.subplots(figsize=(13,9))
-    plt.title('miseq experiments Cornidovirineae + Human different proportions')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Corno, label='Cornidovirineae')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Rhi, label= 'Rhinovirus')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Sars, label = 'Sars_cov_2')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Metap, label = 'Metapneumovirus')
-    sns.lineplot([0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
-    plt.xticks([0.5, 1, 2.5, 5, 10])
-    plt.yticks([0.5, 1, 2.5, 5, 10])
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_Cornidovirineae.pdf',
+    plt.title('Novaseq experiments Coronaviridae + Human different proportions')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Corno, label='Coronaviridae')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Rhi, label= 'Rhinovirus')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Sars, label = 'Sars_cov_2')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Metap, label = 'Metapneumovirus')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
+    plt.xticks([0.03, 0.1, 0.5, 1, 2.5, 5, 10])
+    plt.yticks([0.03, 0.1, 0.5, 1, 2.5, 5, 10])
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_Coronaviridae.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
@@ -273,6 +263,8 @@ if __name__ == '__main__':
     
     # Sars_cov_2
     Sars_cov_2_percentages = [
+                percentage_results['0.03_Sars_cov_2'],
+                percentage_results['0.1_Sars_cov_2'],
                 percentage_results['0.5_Sars_cov_2'],
                 percentage_results['1_Sars_cov_2'],
                 percentage_results['2.5_Sars_cov_2'],
@@ -292,14 +284,14 @@ if __name__ == '__main__':
         Metap.append(percentage[1][3])
     
     f, ax = plt.subplots(figsize=(13,9))
-    plt.title('miseq experiments Sars_cov_2 + Human different proportions')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Corno, label='Cornidovirineae')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Rhi, label= 'Rhinovirus')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Sars, label = 'Sars_cov_2')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Metap, label = 'Metapneumovirus')
-    sns.lineplot([0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
-    plt.xticks([0.5, 1, 2.5, 5, 10])
-    plt.yticks([0.5, 1, 2.5, 5, 10])
+    plt.title('Novaseq experiments Sars_cov_2 + Human different proportions')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Corno, label='Coronaviridae')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Rhi, label= 'Rhinovirus')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Sars, label = 'Sars_cov_2')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Metap, label = 'Metapneumovirus')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
+    plt.xticks([0.03, 0.1, 0.5, 1, 2.5, 5, 10])
+    plt.yticks([0.03, 0.1, 0.5, 1, 2.5, 5, 10])
     plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_Sars_cov_2.pdf',
                 format='pdf',
                 dpi=1200,
@@ -307,6 +299,8 @@ if __name__ == '__main__':
     
     # Metapneumovirus
     Rhinovirus_percentages = [
+               percentage_results['0.03_Rhinovirus'],
+                percentage_results['0.1_Rhinovirus'],
                 percentage_results['0.5_Rhinovirus'],
                 percentage_results['1_Rhinovirus'],
                 percentage_results['2.5_Rhinovirus'],
@@ -326,14 +320,14 @@ if __name__ == '__main__':
         Metap.append(percentage[1][3])
     
     f, ax = plt.subplots(figsize=(13,9))
-    plt.title('miseq experiments Rhinovirus + Human different proportions')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Corno, label='Cornidovirineae')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Rhi, label= 'Rhinovirus')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Sars, label = 'Sars_cov_2')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Metap, label = 'Metapneumovirus')
-    sns.lineplot([0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
-    plt.xticks([0.5, 1, 2.5, 5, 10])
-    plt.yticks([0.5, 1, 2.5, 5, 10])
+    plt.title('Novaseq experiments Rhinovirus + Human different proportions')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Corno, label='Coronaviridae')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Rhi, label= 'Rhinovirus')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Sars, label = 'Sars_cov_2')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Metap, label = 'Metapneumovirus')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
+    plt.xticks([0.03, 0.1, 0.5, 1, 2.5, 5, 10])
+    plt.yticks([0.03, 0.1, 0.5, 1, 2.5, 5, 10])
     plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_Rhinovirus.pdf',
                 format='pdf',
                 dpi=1200,
@@ -342,6 +336,8 @@ if __name__ == '__main__':
     
     # Rhinovirus
     Metapneumovirus_percentages = [
+                percentage_results['0.03_Metapneumovirus'],
+                percentage_results['0.1_Metapneumovirus'],
                 percentage_results['0.5_Metapneumovirus'],
                 percentage_results['1_Metapneumovirus'],
                 percentage_results['2.5_Metapneumovirus'],
@@ -361,63 +357,60 @@ if __name__ == '__main__':
         Metap.append(percentage[1][3])
     
     f, ax = plt.subplots(figsize=(13,9))
-    plt.title('miseq experiments Metapneumovirus + Human different proportions')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Corno, label='Cornidovirineae')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Rhi, label= 'Rhinovirus')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Sars, label = 'Sars_cov_2')
-    sns.lineplot([0.5, 1, 2.5, 5, 10], Metap, label = 'Metapneumovirus')
-    sns.lineplot([0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
-    plt.xticks([0.5, 1, 2.5, 5, 10])
-    plt.yticks([0.5, 1, 2.5, 5, 10])
+    plt.title('Novaseq experiments Metapneumovirus + Human different proportions')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Corno, label='Coronaviridae')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Rhi, label= 'Rhinovirus')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Sars, label = 'Sars_cov_2')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10], Metap, label = 'Metapneumovirus')
+    sns.lineplot([0.03, 0.1, 0.5, 1, 2.5, 5, 10],Influ, label = 'Influenza')
+    plt.xticks([0.03, 0.1, 0.5, 1, 2.5, 5, 10])
+    plt.yticks([0.03, 0.1, 0.5, 1, 2.5, 5, 10])
     plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_proportions_Metapneumovirus.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
-    
-    
-    cutoffs = {'Cornidovirineae': 0.250501,
-               'Metapneumovirus': 0.0335,
-               'Rhinovirus': 0.38288,
-               'Sars-cov-2': 0.32697,
-               'Influenza': 0.0751592
-               }
-    
+    '''
     df_percentages = pd.DataFrame(percentage_results)
+    df_percentages.to_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_heatmaps.pdf')
+    
     for name in classes:
         name_cols = [col for col in df_percentages.columns if name in col]
         df_temp = df_percentages[name_cols]
-        df_temp.columns = ['10%', '5%', '2.5%', '1%', '0,5%']
-        df_temp.index = ['Cornidovirineae','Influenza','Sars-cov-2','Metapneumovirus','Rhinovirus']
+        df_temp.columns = ['10%', '5%', '2.5%', '1%', '0.5%', '0.1%', '0.03%']
+        df_temp.index = ['Coronaviridae','Influenza','Sars-cov-2','Metapneumovirus','Rhinovirus']
         plt.figure(figsize=(13,9))
-        plt.title('Percentage of '+name+' in the sample')
         ax = sns.heatmap(df_temp,
                          annot=True,
                          cmap = sns.color_palette("Blues"))
 
-        ax.tick_params(labelsize=15)
+        ax.tick_params(labelsize=25)
+        ax.axes.set_title('Percentage of '+name+' in the sample', fontsize = 25)
+
         for text in ax.texts:
-            text.set_size(14)
+            text.set_size(18)
             if text.get_position()[1] == 0.5:
-                if float(text.get_text()) > 0.25050:
+                if float(text.get_text()) >= 0.0072:
                     text.set_weight('bold')
                     text.set_size(18)
-            if text.get_position()[1] == 1.5:
-                if float(text.get_text()) > 0.07515:
+            elif text.get_position()[1] == 1.5:
+                if float(text.get_text()) >= 0.0012:
                     text.set_weight('bold')
                     text.set_size(18)
-            if text.get_position()[1] == 2.5:
-                if float(text.get_text()) > 0.32697:
+            elif text.get_position()[1] == 2.5:
+                if float(text.get_text()) >= 0.024:
                     text.set_weight('bold')
                     text.set_size(18)
-            if text.get_position()[1] == 3.5:
-                if float(text.get_text()) > 0.0335:
+            elif text.get_position()[1] == 3.5:
+                if float(text.get_text()) >= 0.0012:
                     text.set_weight('bold')
                     text.set_size(18)
-            if text.get_position()[1] == 4.5:
-                if float(text.get_text()) > 0.38288:
+            elif text.get_position()[1] == 4.5:
+                if float(text.get_text()) >= 0.0264:
                     text.set_weight('bold')
                     text.set_size(18)
-        ax.xaxis.tick_top() # x axis on top
+                    
+          
+        #x.xaxis.tick_top() # x axis on top
         plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Novaseq_experiments_heatmap_'+name+'.pdf',
                 format='pdf',
                 dpi=1200,

@@ -235,11 +235,20 @@ if __name__ == '__main__':
                     ['Cornidovirineae']*100
     
     df_precision = pd.DataFrame({'precisiion': columns_precision, 'virus':columns_virus})
+    df_precision.to_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/precision_9mers.csv')
     
+    df_precision = pd.read_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/precision_9mers.csv')
+    
+    sns.set()
     f, ax = plt.subplots(figsize=(13,9))
-    plt.title('Precision per class')
-    sns.boxplot(x='virus', y='precisiion', data=df_precision)
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/precision_9mers.pdf',
+    b = sns.boxplot(x='virus', y='precisiion', data=df_precision)
+    b.axes.set_title('Precision per class', fontsize = 25)
+    plt.ylim(0.978, 1)
+    b.tick_params(axis='y', labelsize=25)
+    b.tick_params(axis='x', labelsize=25, rotation=45)
+    b.set_ylabel("Precision",fontsize=25)
+    plt.ylabel('Precision', fontsize=25)
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/precision_9mers_zoom.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
@@ -251,12 +260,20 @@ if __name__ == '__main__':
                      recall_results['Metapneumovirus']+\
                      recall_results['Cornidovirineae']
         
-    df_recall = pd.DataFrame({'precisiion': columns_recall, 'virus':columns_virus})
+    df_recall = pd.DataFrame({'recall': columns_recall, 'virus':columns_virus})
+    df_recall.to_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/recall_9mers.csv')
+    df_recall = pd.read_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/recall_9mers.csv')
     
+    
+    sns.set()
     f, ax = plt.subplots(figsize=(13,9))
-    plt.title('Recall per class')
-    sns.boxplot(x='virus', y='precisiion', data=df_recall)
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/recall_9mers.pdf',
+    b = sns.boxplot(x='virus', y='recall', data=df_recall)
+    b.axes.set_title('Recall per class', fontsize = 25)
+    b.tick_params(axis='y', labelsize=25)
+    b.tick_params(axis='x', labelsize=25, rotation=45)
+    b.set_ylabel("Recall",fontsize=25)
+    plt.ylabel('Recall', fontsize=25)
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/recall_9mers_zoom.pdf',
                 format='pdf',
                 dpi=1200,
                 bbox_inches='tight', pad_inches=0)
