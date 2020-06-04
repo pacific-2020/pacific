@@ -115,6 +115,7 @@ if __name__ == '__main__':
     sess = tf.Session(config=config)
     
     model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.01.pacific_9mers.h5")
+    model = load_model("/media/labuser/Data/COVID-19_classifier/pacific/model/pacific.pacific_9mers.01.h5")
     
     # Keras loading sequences tokenizer 
     with open('/media/labuser/Data/COVID-19_classifier/pacific/model/tokenizer.01.pacific_9mers.pickle', 'rb') as handle:

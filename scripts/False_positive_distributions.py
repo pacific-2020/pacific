@@ -172,6 +172,13 @@ if __name__ == '__main__':
     SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Sars-CoV-2/novaseq_reads_sars-cov-2_1M.fastq'
     Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Human/novaseq_reads_Human_1M.fastq'
     
+    Coronaviridae_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Cornidovirineae/miseq/miseq_reads_Cornidovirineae.fastq'
+    Influenza_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Influenza/miseq/miseq_reads_Influenza.fastq'
+    Metapneumovirus_path  = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Metapneumovirus/miseq/miseq_reads_Metapneumovirus.fastq'
+    Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Rhinovirus/miseq/miseq_reads_rhinovirus.fastq'
+    SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Sars-CoV-2/miseq/miseq_reads_sars-cov-2.fastq'
+    Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Human/miseq/miseq_reads_human.fastq'
+    
     kmer= 9 
     
     influenza = main_illumina(Influenza_path, 500000, 150, kmer, 'fastq')
@@ -325,10 +332,10 @@ if __name__ == '__main__':
     
     df_proportions = pd.DataFrame({'virus' : virus, 'FPR in the top 95 percentil': proportions})
     
-    df_proportions.to_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_illumina_in_silico_100_experiments_distributions+rest_virus.csv')
+    df_proportions.to_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Miseq_in_silico_100_experiments_distributions+rest_virus.csv')
     
-    df_proportions = pd.read_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_illumina_in_silico_100_experiments_distributions+rest_virus.csv')
-       
+    df_proportions = pd.read_csv('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Miseq_in_silico_100_experiments_distributions+rest_virus.csv')
+      
     #sns.set()
     f, ax = plt.subplots(figsize=(13,9))
     plt.title('FPR in-silico 1000 experiments per class')
@@ -340,7 +347,7 @@ if __name__ == '__main__':
     b.set_ylabel("False positive rate",fontsize=25)
     plt.ylabel('False positive rate', fontsize=25)
     
-    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_illumina_in_silico_1000_experiments_distributions_boxplots+rest_virus.pdf',
+    plt.savefig('/media/labuser/Data/COVID-19_classifier/pacific/results/9-mers/FPR_0.95_Miseq_in_silico_1000_experiments_distributions_boxplots+rest_virus.pdf',
                     format='pdf',
                     dpi=1200,
                     bbox_inches='tight', pad_inches=0)

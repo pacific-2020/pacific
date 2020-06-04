@@ -35,9 +35,11 @@ def prepare_read_illumina(trancriptome, file_type):
     '''
     fasta_sequences = SeqIO.parse(open(trancriptome),file_type)
     sequences = []
+    names = []
     for fasta in fasta_sequences:
         name, sequence = fasta.id, str(fasta.seq)
         sequences.append(sequence)
+        names.append(name)
     return sequences
 
 
