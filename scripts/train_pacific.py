@@ -282,7 +282,6 @@ if __name__ == '__main__':
     max_length = max([len(s.split()) for s in total_sequences])
     # pad sequences
     sequences_preproces = pad_sequences(sequences_preproces, maxlen = max_length, padding = 'post')
-    sequences_preproces, labels_proces = shuffle(sequences_preproces, labels_proces)
     
     print('Saving tokenizer object '+ OUT_FOLDER+'/tokenizer.'+MODEL_NAME+'.pickle')
     with open(OUT_FOLDER+'/tokenizer.'+MODEL_NAME+'.pickle', 'wb') as handle:

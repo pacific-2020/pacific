@@ -48,20 +48,20 @@ REQUIRED.add_argument("--label_maker",
                       help="Label maker object file path",
                       required=True)
 
+REQUIRED.add_argument("--file_type",
+                      help='fasta or fastq training files format (all files should have same format)',
+                      default='fasta',
+                      )
+
 #arguments
 OPTIONAL.add_argument("--FILE_OUT",
                       help='path to the output file',
-                      default="./")
+                      default="./pacific_output.txt")
 
 OPTIONAL.add_argument("--k_mers",
                       help='K-mer number use to train the model',
                       default=9,
                       type=int)
-
-OPTIONAL.add_argument("--file_type",
-                      help='fasta or fastq training files format (all files should have same format)',
-                      default='fasta',
-                      )
 
 OPTIONAL.add_argument("--prediction_threshold",
                       help='Threshold to use for the prediction',
@@ -179,8 +179,11 @@ if __name__ == '__main__':
     # loading label maker
     with open(LABEL_MAKER, 'rb') as handle:
         label_maker = pickle.load(handle)
-        
+    
+    print()    
     print('Converting reads into k-mers...')
+    print()
+    
     # Convert reads into k-mers
     kmer_sequences, names = main(FILE_IN,
                                  150, 
@@ -188,12 +191,13 @@ if __name__ == '__main__':
                                  FILE_TYPE)
     
     sequences = tokenizer.texts_to_sequences(kmer_sequences)
-    
+    print()
     print('Making predictions...')
+       
     predictions = model.predict(np.array(sequences))
     
-    
-    print('Using '+THRESHOLD_PREDICTION +' thresholds to filter predictions...')
+    print()
+    print('Using '+str(THRESHOLD_PREDICTION)+' thresholds to filter predictions...')
     
     predictions_high_acc = []
     names_high_acc = []
@@ -234,11 +238,22 @@ if __name__ == '__main__':
     Rhinovirus =  len(labels[labels == 'Rhinovirus']) / len(labels) * 100
     Sars_cov_2 =  len(labels[labels == 'Sars_cov_2']) / len(labels) * 100
     
+    results = {Influenza,
+               Coronaviridae,
+               Metapneumovirus,
+               Rhinovirus,
+               SARS_CoV_2, 
+               }
+    
+    
+    print()
     print('Saving output file to ', FILE_OUT)
     
     df.to_csv(FILE_OUT, sep='\t')
     
+    print()
     print('Relative proportion of virus in the sample')
+    print()
     
     # specify the number of discarted reads
     
@@ -253,6 +268,19 @@ if __name__ == '__main__':
     print('Rhinovirus', Rhinovirus)
     
     print('Sars_cov_2', Sars_cov_2)
+    
+    print('Virus group proportions that overpass the empirical threshold are: ')
+    
+    limit_detection = {'Influenza': 0.001,
+                       'Coronaviridae': 0.007,
+                       'Metapneumovirus': 0.001,
+                       'Rhinovirus': 0.0242,
+                       'SARS_CoV_2': 0.017 
+                      }
+    
+    for virus in results:
+        if virus > limit_detection[str(virus)]:
+            print(str(virus))
     
     print()
     print('Thank you for using PACIFIC')
