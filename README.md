@@ -1,3 +1,54 @@
+# PACIFIC 
+
+PACIFIC: A lightweight alignment-free deep-learning classifier of SARS-CoV-2 and co-infecting viral sequences  
+#Add reference
+
+PACIFIC implements deep learning to classify RNA sequencing reads into human, SARS-CoV-2 or additional respiratory viruses.
+
+## Table of Contents
+
+1. Quick start
+2. Usage
+
+## Quick start
+
+### Install and test PACIFIC
+```
+git clone https://github.com/pabloacera/pacific.git
+cd pacific;
+python ./PACIFIC.py --FILE_IN testdata etc.
+#Add test data to check if it works
+```
+
+### System requirements
+Python 3.X+ (python.org/) with the following libraries:
+  Bio (v.)
+  sklearn (v.)
+  numPy (v.)
+  keras (v.)
+  tensorflow (v.)
+
+## Usage
+
+Run PACIFIC
+```
+python ./PACIFIC.py \
+  --FILE_IN  my.--model MODEL --tokenizer TOKENIZER
+                  --label_maker LABEL_MAKER [--file_type FILE_TYPE]
+                  [--FILE_OUT FILE_OUT] [--k_mers K_MERS]
+                  [--prediction_threshold PREDICTION_THRESHOLD]
+###Set defaults here
+```
+
+Output
+PACIFIC will output the following files:
+
+  
+
+
+
+
+
 # SRA downloads
 
 Reads were downloaded using the following command:
