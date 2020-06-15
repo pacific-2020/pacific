@@ -69,6 +69,14 @@ OPTIONAL.add_argument("--prediction_threshold",
                       type=int
                       )
 
+OPTIONAL.add_argument("--output_fasta",
+                      help='If this option is True, then the input fasta will be output adding the highest probability class and '+
+                            ' the label to every read id',
+                      default=False,
+                      action='store_true'
+                      )
+
+
 parser._action_groups.append(OPTIONAL)
 
 ARGS = parser.parse_args()
@@ -86,6 +94,7 @@ MODEL = ARGS.model
 FILE_TYPE = ARGS.file_type
 FILE_OUT = ARGS.FILE_OUT
 THRESHOLD_PREDICTION = ARGS.prediction_threshold
+OUTPUT_FASTA = ARGS.output_fasta
 
 # import other packages
 from Bio import SeqIO
@@ -97,6 +106,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import sys
+import os
 
 def prepare_read(trancriptome, file_type):
     '''
@@ -131,12 +141,13 @@ def main(file, size_lenght, k_mer_size, file_type):
     '''
    
     all_transcripts, names = prepare_read(file,
-                                   file_type)
+                                          file_type)
     reads, names = process_reads(all_transcripts, 
-                           size_lenght,
-                           k_mer_size,
-                           names)
-    return reads, names
+                                 size_lenght,
+                                 k_mer_size,
+                                 names)
+
+    return all_transcripts, reads, names
 
 def accuracy(labels, predictions):
     '''
@@ -185,10 +196,10 @@ if __name__ == '__main__':
     print()
     
     # Convert reads into k-mers
-    kmer_sequences, names = main(FILE_IN,
-                                 150, 
-                                 K_MERS,
-                                 FILE_TYPE)
+    reads, kmer_sequences, names = main(FILE_IN,
+                                            150,
+                                            K_MERS,
+                                            FILE_TYPE)
     
     sequences = tokenizer.texts_to_sequences(kmer_sequences)
     
@@ -196,11 +207,21 @@ if __name__ == '__main__':
         sys.exit('All sequences are smaler than 150bp. No predictions made')
           
         
-        
     print()
     print('Making predictions...')
        
     predictions = model.predict(np.array(sequences))
+    labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)
+
+    if OUTPUT_FASTA is True:
+        print()
+        fasta_name_out = 'output_'+os.path.split(FILE_IN)[1]
+        print('Output FASTA file '+fasta_name_out)
+        with open(fasta_name_out,'w') as output:
+            for i in enumerate(names):
+                print(i[1]+':'+str(max(predictions[i[0]]))+':'+labels[i[0]], file=output)
+                print(reads[i[0]], file=output)
+                
     
     print()
     print('Using '+str(THRESHOLD_PREDICTION)+' thresholds to filter predictions...')
