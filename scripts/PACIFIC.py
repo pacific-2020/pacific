@@ -96,7 +96,7 @@ import random
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-
+import sys
 
 def prepare_read(trancriptome, file_type):
     '''
@@ -164,11 +164,11 @@ if __name__ == '__main__':
     np.random.seed(seed_value)# 4. Set `tensorflow` pseudo-random generator at a fixed value
     tf.set_random_seed(seed_value)# 5. For layers that introduce randomness like dropout, make sure to set seed values 
     
-    '''
+    
     config = tf.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
-    '''
+    
     
     model = load_model(MODEL)
     
@@ -191,6 +191,12 @@ if __name__ == '__main__':
                                  FILE_TYPE)
     
     sequences = tokenizer.texts_to_sequences(kmer_sequences)
+    
+    if not sequences:
+        sys.exit('All sequences are smaler than 150bp. No predictions made')
+          
+        
+        
     print()
     print('Making predictions...')
        
@@ -231,18 +237,18 @@ if __name__ == '__main__':
     
     df = df[cols]
     
-    Cornidovirineae = len(labels[labels == 'Coronaviridae']) / len(labels) * 100
+    Coronaviridae = len(labels[labels == 'Coronaviridae']) / len(labels) * 100
     Human = len(labels[labels == 'Human']) / len(labels) * 100
     Influenza =  len(labels[labels == 'Influenza']) / len(labels) * 100
     Metapneumovirus =  len(labels[labels == 'Metapneumovirus']) / len(labels) * 100
     Rhinovirus =  len(labels[labels == 'Rhinovirus']) / len(labels) * 100
     Sars_cov_2 =  len(labels[labels == 'Sars_cov_2']) / len(labels) * 100
     
-    results = {Influenza,
-               Coronaviridae,
-               Metapneumovirus,
-               Rhinovirus,
-               SARS_CoV_2, 
+    results = {'Influenza':   Influenza,
+               'Coronaviridae': Coronaviridae,
+               'Metapneumovirus': Metapneumovirus,
+               'Rhinovirus':  Rhinovirus,
+               'Sars_cov_2':  Sars_cov_2
                }
     
     
@@ -251,13 +257,19 @@ if __name__ == '__main__':
     
     df.to_csv(FILE_OUT, sep='\t')
     
+    print('From a total of '+str(len(kmer_sequences))+' 150bp reads, '+
+          str(len(kmer_sequences) - len(predictions_high_acc))+' predictions are below the'+\
+          'threshold and were discarted from the results')
+    
+    
     print()
     print('Relative proportion of virus in the sample')
     print()
     
     # specify the number of discarted reads
     
-    print('Cornidovirineae: ', Cornidovirineae)
+    
+    print('Coronaviridae: ', Coronaviridae)
     
     print('Human: ', Human)
     
@@ -268,22 +280,28 @@ if __name__ == '__main__':
     print('Rhinovirus', Rhinovirus)
     
     print('Sars_cov_2', Sars_cov_2)
-    
+    print()
     print('Virus group proportions that overpass the empirical threshold are: ')
     
     limit_detection = {'Influenza': 0.001,
-                       'Coronaviridae': 0.007,
+                       'Coronaviridae': 0.009,
                        'Metapneumovirus': 0.001,
                        'Rhinovirus': 0.0242,
-                       'SARS_CoV_2': 0.017 
+                       'Sars_cov_2': 0.017 
                       }
     
+    virus_positive = []
     for virus in results:
-        if virus > limit_detection[str(virus)]:
-            print(str(virus))
+        if results[virus] > limit_detection[str(virus)]:
+            virus_positive.append((str(virus)))
+    
+    if not virus_positive:
+        print('None')
+    else:
+        print(' '.join(virus_positive))
     
     print()
-    print('Thank you for using PACIFIC')
+    print('Thank you for using PACIFIC =^)')
     
     
     

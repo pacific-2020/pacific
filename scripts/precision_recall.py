@@ -125,7 +125,6 @@ def precision(labels, predictions, other_virus):
 
 
 
-
 if __name__ == '__main__':
     
     seed_value = 42
@@ -154,7 +153,7 @@ if __name__ == '__main__':
     Metapneumovirus_path  = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Metapneumovirus/novaseq_reads_Metapneumovirus_1M.fastq'
     Rhinovirus_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Rhinovirus/novaseq_reads_Rhinovirus_1M.fastq'
     SARS_CoV_2_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Sars-CoV-2/novaseq_reads_sars-cov-2_1M.fastq'
-    Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSilicoSeq_reads/Human/novaseq_reads_Human_1M.fastq'
+    Human_path = '/media/labuser/Data/COVID-19_classifier/pacific/data/InSiicoSeq_reads/Human/novaseq_reads_Human_1M.fastq'
     
     kmer = 9
     

@@ -15,7 +15,8 @@ parser = argparse.ArgumentParser(description=
                                  """
                                  This script train PACIFIC using fasta reads.
                                  The model, training and validation 
-                                 plots will be safe in a specific foldere.
+                                 plots will be generated.
+                                 Also a model, tokenizer and label_maker will be generated
                                  """)
 
 OPTIONAL = parser._action_groups.pop()
@@ -290,7 +291,7 @@ if __name__ == '__main__':
     sequences_preproces, labels_proces = shuffle(sequences_preproces, labels_proces)
     
     max_features = len(tokenizer.word_index)+1
-
+    
     # Convolution
     kernel_size = 3
     filters = 128
@@ -318,7 +319,7 @@ if __name__ == '__main__':
     if GPU == True:
         model.add(Bidirectional(CuDNNLSTM(lstm_output_size)))
     else:
-        model.add(Bidirectional(LSTM(lstm_output_size)))
+        model.add(Bidirectional(LSTM(lstm_output_size)))    
     model.add(Dropout(0.1))
     model.add(Dense(50))
     model.add(Dense(6))
