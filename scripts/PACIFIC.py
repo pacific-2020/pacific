@@ -173,12 +173,12 @@ if __name__ == '__main__':
     seed_value = 42
     random.seed(seed_value)# 3. Set `numpy` pseudo-random generator at a fixed value
     np.random.seed(seed_value)# 4. Set `tensorflow` pseudo-random generator at a fixed value
-    tf.set_random_seed(seed_value)# 5. For layers that introduce randomness like dropout, make sure to set seed values 
+    tf.random.set_seed(seed_value)# 5. For layers that introduce randomness like dropout, make sure to set seed values 
     
     
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
-    sess = tf.Session(config=config)
+    sess = tf.compat.v1.Session(config=config)
     
     
     model = load_model(MODEL)
