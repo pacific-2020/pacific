@@ -1,13 +1,84 @@
-# SRA downloads
+# PACIFIC 
 
-Reads were downloaded using the following command:
+PACIFIC: A lightweight alignment-free deep-learning classifier of SARS-CoV-2 and co-infecting viral sequences  
+#Add reference
 
+PACIFIC implements deep learning to classify RNA sequencing reads into human, SARS-CoV-2 or additional respiratory viruses.
+
+PACIFIC takes as input a FASTA/FASTQ file and predict presence of viruses:
+	    SARS-CoV-2
+	    128 taxonomic units from Influenza
+	    5 from metapneumovirus
+	    130 species from rhinovirus 
+	    11 species from Coronaviridae (non-SARS-CoV-2).
+
+## Table of Contents
+
+1. Quick start
+2. System requirements
+3. Input and output
+4. Usage
+5. Test data
+
+## Quick start
+
+### Install and test PACIFIC
 ```
-fasterq-dump --threads 4 -p --split-files --outfile PLATFORM.ASSAYTYPE.LIBRARYLAYOUT/BIOPROJECTID_RUNID.fastq RunID
+git clone https://github.com/pabloacera/pacific.git
+cd pacific;
+python ./PACIFIC.py --FILE_IN testdata etc.
+#Add test data to check if it works
+```
+#Describe expected output
+
+
+### System requirements
+Python 3.X+ (python.org/) with the following libraries:
+  Bio (v.)
+  sklearn (v.)
+  numPy (v.)
+  keras (v.)
+  tensorflow (v.)
+
+## Input 
+PACIFIC expects FASTA or FASTQ RNA-seq files as input. 
+
+#Comment on training files
+
+## Output
+PACIFIC will output the following files:
+
+#Describe output files
+
+## Usage
+
+Run PACIFIC
+```
+Usage: python ./PACIFIC.py [options]
 ```
 
-## NOTES
-1. PRJNA605907: Reads were split into paired and unpaired reads. There were three files for each run, RunID_1.fastq.gz, RunID_2.fastq.gz and RunID.fastq.gz 
-2. PRJNA614995: SRR11410536, SRR11410538, SRR11410540 are labelled as SINGLE library layout in metadata file. They are actually paired data. These data are treated as paired data.
-3. PRJNA612578: SRR11314339 was split into paired and unpaired reads. There were three files for each run, RunID_1.fastq.gz, RunID_2.fastq.gz and RunID.fastq.gz
+Required arguments:
+```
+  --FILE_IN FILE_IN     FASTA/FASTQ file path to use PACIFIC
+  --model MODEL         PACIFIC model path PACIFIC
+  --tokenizer TOKENIZER
+                        Tokenizer file path
+  --label_maker LABEL_MAKER
+                        Label maker object file path
+  --file_type FILE_TYPE
+                        fasta or fastq training files format (all files should
+                        have same format)
+```
+
+Optional arguments:
+```
+  -h, --help            show this help message and exit
+  --FILE_OUT FILE_OUT   path to the output file
+  --k_mers K_MERS       K-mer number use to train the model
+  --prediction_threshold PREDICTION_THRESHOLD
+                        Threshold to use for the prediction
+```
+
+# Test data  
+
 

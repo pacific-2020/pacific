@@ -1,0 +1,10 @@
+pacific_train_nonGPU.py
+test_GISAID.py
+test_synthetic.py
+test_synthetic_hardip_reads.py
+generate_random_reads.py
+test_GISAID_and_whole_exp.py
+False_positive_distributions.py
+in_silico_experiments.py
+precision_recall.py
+test_real_data.py
