@@ -32,44 +32,50 @@ OPTIONAL = parser._action_groups.pop()
 REQUIRED = parser.add_argument_group('required arguments')
 
 #Inputs
-REQUIRED.add_argument("--FILE_IN",
+REQUIRED.add_argument("-i", "--FILE_IN",
                       help="FASTA/FASTQ file path to use PACIFIC",
                       required=True)
 
-REQUIRED.add_argument("--model",
+REQUIRED.add_argument("-m", "--model",
                       help="PACIFIC model path PACIFIC",
                       required=True)
 
-REQUIRED.add_argument("--tokenizer",
+REQUIRED.add_argument("-t", "--tokenizer",
                       help="Tokenizer file path",
                       required=True)
 
-REQUIRED.add_argument("--label_maker",
+REQUIRED.add_argument("-l", "--label_maker",
                       help="Label maker object file path",
                       required=True)
 
-REQUIRED.add_argument("--file_type",
+REQUIRED.add_argument("-f", "--file_type",
                       help='fasta or fastq training files format (all files should have same format)',
                       default='fasta',
                       )
 
 #arguments
+<<<<<<< HEAD
 OPTIONAL.add_argument("--OUTPUT_DIR",
                       help='path to the output directory',
                       default=".")
+=======
+OPTIONAL.add_argument("-o", "--FILE_OUT",
+                      help='path to the output file',
+                      default="./pacific_output.txt")
+>>>>>>> e6d84e072ce21ac78bb89eddb90c6fe920dcb53d
 
-OPTIONAL.add_argument("--k_mers",
+OPTIONAL.add_argument("-k", "--k_mers",
                       help='K-mer number use to train the model',
                       default=9,
                       type=int)
 
-OPTIONAL.add_argument("--prediction_threshold",
+OPTIONAL.add_argument("-T", "--prediction_threshold",
                       help='Threshold to use for the prediction',
                       default=0.95,
                       type=int
                       )
 
-OPTIONAL.add_argument("--output_fasta",
+OPTIONAL.add_argument("-O", "--output_fasta",
                       help='If this option is True, then the input fasta will be output adding the highest probability class and '+
                             ' the label to every read id',
                       default=False,
@@ -197,12 +203,12 @@ if __name__ == '__main__':
     seed_value = 42
     random.seed(seed_value)# 3. Set `numpy` pseudo-random generator at a fixed value
     np.random.seed(seed_value)# 4. Set `tensorflow` pseudo-random generator at a fixed value
-    tf.set_random_seed(seed_value)# 5. For layers that introduce randomness like dropout, make sure to set seed values 
+    tf.random.set_seed(seed_value)# 5. For layers that introduce randomness like dropout, make sure to set seed values 
     
     
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
-    sess = tf.Session(config=config)
+    sess = tf.compat.v1.Session(config=config)
     
     model = load_model(MODEL)
     
