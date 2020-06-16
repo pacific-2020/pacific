@@ -4,7 +4,7 @@
 Created on Wed Apr 15 09:32:02 2020
 
 PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the following viruses and their relative sample proportions:
-        SARS-CoV-2;
+        SARS-CoV-2,
         128 taxonomic units from Influenza,
         5 species from Metapneumovirus,
         130 species from Rhinovirus, and
@@ -19,7 +19,7 @@ import argparse
 parser = argparse.ArgumentParser(prog='PACIFIC v0.1', description=
                                  """ 
                                  PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the following viruses and their relative sample proportions:
-                                 SARS-CoV-2;
+                                 SARS-CoV-2,
                                  128 taxonomic units from Influenza,
                                  5 species from Metapneumovirus,
                                  130 species from Rhinovirus, and
