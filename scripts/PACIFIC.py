@@ -16,77 +16,84 @@ PACIFIC takes as input a FASTA/FASTQ file and predict presence of viruses:
 
 import argparse
 
-parser = argparse.ArgumentParser(description=
-                                 """
-                                 PACIFIC takes as input a FASTA/FASTQ file and predict presence of viruses:
-                                 SARS-CoV-2
-                                 128 taxonomic units from Influenza
-                                 5 from metapneumovirus
-                                 130 species from rhinovirus 
+parser = argparse.ArgumentParser(prog='PACIFIC v0.1', description=
+                                 """ 
+                                 PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the following viruses:
+                                 SARS-CoV-2;
+                                 128 taxonomic units from Influenza,
+                                 5 species from Metapneumovirus,
+                                 130 species from Rhinovirus, and
                                  11 species from Coronaviridae (non-SARS-CoV-2).
                                  
-                                 We recommend to keep default parameters to ensure high accuracy.
-                                 """)
+                                 We recommend that a user uses default parameters to ensure high accuracy.
+                                 """, usage='python PACIFIC.py [options] -i <in.fa>|<in.fq>\nversion: %(prog)s')
 
 OPTIONAL = parser._action_groups.pop()
 REQUIRED = parser.add_argument_group('required arguments')
 
 #Inputs
-REQUIRED.add_argument("-i", "--FILE_IN",
-                      help="FASTA/FASTQ file path to use PACIFIC",
+## CHANGE -m  -t -l -f to OPTIONAL and CREATE RELATIVE PATHS FOR THESE FILES
+
+REQUIRED.add_argument("-i", "--input_file",
+                      help="FASTA/FASTQ input file path",
+                      metavar='\b',
                       required=True)
 
 REQUIRED.add_argument("-m", "--model",
-                      help="PACIFIC model path PACIFIC",
+                      help="PACIFIC model file path",
+                      metavar='\b',
                       required=True)
 
 REQUIRED.add_argument("-t", "--tokenizer",
                       help="Tokenizer file path",
+                      metavar='\b',
                       required=True)
 
 REQUIRED.add_argument("-l", "--label_maker",
                       help="Label maker object file path",
+                      metavar='\b',
                       required=True)
 
-REQUIRED.add_argument("-f", "--file_type",
-                      help='fasta or fastq training files format (all files should have same format)',
+#arguments
+OPTIONAL.add_argument("-f", "--file_type",
+                      help='FASTA or FASTQ training files format (all files should have the same format) [fasta]',
+                      metavar='<fasta/fastq>',
                       default='fasta',
                       )
 
-#arguments
-<<<<<<< HEAD
-OPTIONAL.add_argument("--OUTPUT_DIR",
-                      help='path to the output directory',
+OPTIONAL.add_argument("-o", "--outputdir",
+                      help='path to the output directory [.]',
+                      metavar='<dir>',
                       default=".")
-=======
-OPTIONAL.add_argument("-o", "--FILE_OUT",
-                      help='path to the output file',
-                      default="./pacific_output.txt")
->>>>>>> e6d84e072ce21ac78bb89eddb90c6fe920dcb53d
 
-OPTIONAL.add_argument("-k", "--k_mers",
-                      help='K-mer number use to train the model',
-                      default=9,
-                      type=int)
+#OPTIONAL.add_argument("-k", "--k_mers",
+#                      help='K-mer number use to train the model [9]',
+#                      default=9,
+#                      type=int)
 
 OPTIONAL.add_argument("-T", "--prediction_threshold",
-                      help='Threshold to use for the prediction',
+                      help='Threshold/cutoff to use for predictions [0.95]',
+                      metavar='<float>',
                       default=0.95,
                       type=int
                       )
 
+OPTIONAL.add_argument("-c", "--chunk_size",
+                      help='Number of reads per chunk [10000]',
+                      metavar='<int>',
+                      default=50000,
+                      type=int
+                      )                      
+
 OPTIONAL.add_argument("-O", "--output_fasta",
-                      help='If this option is True, then the input fasta will be output adding the highest probability class and '+
-                            ' the label to every read id',
+                      help='If this option is "True", a FASTA file containing predictions for each read will be provided [False]',
                       default=False,
                       action='store_true'
                       )
 
-OPTIONAL.add_argument("--chunk_size",
-                      help='aksdnasd',
-                      default=10000,
-                      type=int
-                      )
+OPTIONAL.add_argument('-v', '--version', 
+                        action='version', 
+                        version='%(prog)s')
 
 
 parser._action_groups.append(OPTIONAL)
@@ -94,17 +101,16 @@ parser._action_groups.append(OPTIONAL)
 ARGS = parser.parse_args()
 
 # Inputs
-FILE_IN = ARGS.FILE_IN
+FILE_IN = ARGS.input_file
 MODEL = ARGS.model
 TOKENIZER = ARGS.tokenizer
 LABEL_MAKER = ARGS.label_maker
 
 
 # Arguments
-K_MERS = ARGS.k_mers
 MODEL = ARGS.model
 FILE_TYPE = ARGS.file_type
-OUTPUTDIR = ARGS.OUTPUT_DIR
+OUTPUTDIR = ARGS.outputdir
 THRESHOLD_PREDICTION = ARGS.prediction_threshold
 OUTPUT_FASTA = ARGS.output_fasta
 CHUNK_SIZE = ARGS.chunk_size
@@ -118,8 +124,12 @@ import random
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import sys
 import os
+
+# hardcode paths to tokenizer and label maker
+dirname = os.path.dirname(__file__)
+#TOKENIZER = os.path.join(dirname, '../model', 'tokenizer.01.pacific_9mers.pickle')
+#LABEL_MAKER = os.path.join(dirname, '../model', 'label_maker.01.pacific_9mers.pickle')
 
 
 def process_reads(sequences, kmer, names):
@@ -203,12 +213,16 @@ if __name__ == '__main__':
     seed_value = 42
     random.seed(seed_value)# 3. Set `numpy` pseudo-random generator at a fixed value
     np.random.seed(seed_value)# 4. Set `tensorflow` pseudo-random generator at a fixed value
-    tf.random.set_seed(seed_value)# 5. For layers that introduce randomness like dropout, make sure to set seed values 
-    
+    try:
+        tf.random.set_seed(seed_value)# 5. For layers that introduce randomness like dropout, make sure to set seed values 
+    except:
+        tf.set_random_seed(seed_value)
     
     config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
     sess = tf.compat.v1.Session(config=config)
+    
+    K_MERS = 9
     
     model = load_model(MODEL)
     
