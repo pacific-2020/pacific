@@ -75,7 +75,7 @@ PACIFIC expects four arguments as input:
  - Tokenizer file (recommended: ./model/tokenizer.01.pacific_9mers.pickle)
  - Label maker file (recommended: ./model/label_maker.01.pacific_9mers.pickle)
 
-PACIFIC allows users to use their own custom training model, tokenizer and label maker files if needed. However, we recommend the use of the following files above as input into the program.
+PACIFIC allows users to use their own custom training model, tokenizer and label maker files. However, we recommend the use of default parameters and the following files above as input into the program.
 
 ## Output
 PACIFIC will output the following files:
