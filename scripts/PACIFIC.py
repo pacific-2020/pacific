@@ -54,9 +54,9 @@ REQUIRED.add_argument("--file_type",
                       )
 
 #arguments
-OPTIONAL.add_argument("--FILE_OUT",
-                      help='path to the output file',
-                      default="./pacific_output.txt")
+OPTIONAL.add_argument("--OUTPUT_DIR",
+                      help='path to the output directory',
+                      default=".")
 
 OPTIONAL.add_argument("--k_mers",
                       help='K-mer number use to train the model',
@@ -76,6 +76,12 @@ OPTIONAL.add_argument("--output_fasta",
                       action='store_true'
                       )
 
+OPTIONAL.add_argument("--chunk_size",
+                      help='aksdnasd',
+                      default=10000,
+                      type=int
+                      )
+
 
 parser._action_groups.append(OPTIONAL)
 
@@ -92,9 +98,10 @@ LABEL_MAKER = ARGS.label_maker
 K_MERS = ARGS.k_mers
 MODEL = ARGS.model
 FILE_TYPE = ARGS.file_type
-FILE_OUT = ARGS.FILE_OUT
+OUTPUTDIR = ARGS.OUTPUT_DIR
 THRESHOLD_PREDICTION = ARGS.prediction_threshold
 OUTPUT_FASTA = ARGS.output_fasta
+CHUNK_SIZE = ARGS.chunk_size
 
 # import other packages
 from Bio import SeqIO
@@ -108,21 +115,8 @@ import tensorflow as tf
 import sys
 import os
 
-def prepare_read(trancriptome, file_type):
-    '''
-    function will take tranciprtome and make reads
-    '''
-    fasta_sequences = SeqIO.parse(open(trancriptome),file_type)
-    sequences = []
-    names = []
-    for fasta in fasta_sequences:
-        name, sequence = fasta.id, str(fasta.seq)
-        sequences.append(sequence)
-        names.append(name)
-    return sequences, names
 
-
-def process_reads(sequences, length, kmer, names):
+def process_reads(sequences, kmer, names):
     '''
     '''
     r_reads = []
@@ -136,18 +130,14 @@ def process_reads(sequences, length, kmer, names):
     return r_reads, new_names
 
 
-def main(file, size_lenght, k_mer_size, file_type):
+def main(all_transcripts, names, k_mer_size):
     '''
     '''
-   
-    all_transcripts, names = prepare_read(file,
-                                          file_type)
-    reads, names = process_reads(all_transcripts, 
-                                 size_lenght,
-                                 k_mer_size,
-                                 names)
+    reads, names_p = process_reads(all_transcripts, 
+                                   k_mer_size,
+                                   names)
 
-    return all_transcripts, reads, names
+    return all_transcripts, reads, names_p
 
 def accuracy(labels, predictions):
     '''
@@ -167,6 +157,40 @@ def accuracy(labels, predictions):
     
     return correct/len(labels)
 
+def predict_chunk(sequences,
+                 names,
+                 K_MERS,
+                 FILE_TYPE,
+                 total_results,
+                 total_sequences):
+    '''
+    Predicting and write a chunk of reads
+    '''
+    
+    total_sequences += len(sequences)
+    
+    reads, kmer_sequences, names = main(sequences,
+                                        names,
+                                        K_MERS,
+                                        )
+    
+    kmer_sequences = tokenizer.texts_to_sequences(kmer_sequences)
+       
+    predictions = model.predict(np.array(kmer_sequences))
+    labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)
+        
+    if OUTPUT_FASTA is True:
+        print()
+        fasta_name_out = OUTPUTDIR+'/tmp_output_'+str(counter)
+        print('writting temporary output file '+fasta_name_out)
+        with open(fasta_name_out,'w') as output:
+            for i in enumerate(names):
+                print('>'+i[1]+':'+str(max(predictions[i[0]]))+':'+labels[i[0]], file=output)
+                print(reads[i[0]], file=output)
+                total_results[labels[i[0]]] += [max(predictions[i[0]])]
+                
+    return total_results, total_sequences
+
 
 if __name__ == '__main__':
 
@@ -180,7 +204,6 @@ if __name__ == '__main__':
     config.gpu_options.allow_growth = True
     sess = tf.Session(config=config)
     
-    
     model = load_model(MODEL)
     
     # Keras loading sequences tokenizer 
@@ -192,135 +215,130 @@ if __name__ == '__main__':
         label_maker = pickle.load(handle)
     
     print()    
-    print('Converting reads into k-mers...')
+    print('Reading input file...')
     print()
     
-    # Convert reads into k-mers
-    reads, kmer_sequences, names = main(FILE_IN,
-                                            150,
-                                            K_MERS,
-                                            FILE_TYPE)
+    total_results = {'Sars_cov_2': [],
+                     'Coronaviridae': [],
+                     'Influenza': [],
+                     'Metapneumovirus': [],
+                     'Rhinovirus': [],
+                     'Human': []
+                     }
     
-    sequences = tokenizer.texts_to_sequences(kmer_sequences)
+    total_sequences = 0
+    fasta_sequences = SeqIO.parse(open(FILE_IN), FILE_TYPE)
+    sequences = []
+    names = []
+    counter = 0
+    for fasta in fasta_sequences:
+        name, sequence = fasta.id, str(fasta.seq)
+        sequences.append(sequence)
+        names.append(name)
+        counter +=1
+        if counter%CHUNK_SIZE == 0:
+            
+            total_results, total_sequences = predict_chunk(sequences,
+                                                           names,
+                                                           K_MERS,
+                                                           FILE_TYPE,
+                                                           total_results,
+                                                           total_sequences)
+            sequences = []
+            names = []
+            print()
+            print('predictig reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
+            
+    total_results, total_sequences = predict_chunk(sequences,
+                                                   names,
+                                                   K_MERS,
+                                                   FILE_TYPE,
+                                                   total_results,
+                                                   total_sequences)
     
-    if not sequences:
-        sys.exit('All sequences are smaler than 150bp. No predictions made')
-          
-        
-    print()
-    print('Making predictions...')
-       
-    predictions = model.predict(np.array(sequences))
-    labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)
-
+    tmp_files = os.listdir(OUTPUTDIR)
+    tmp_files = [i for i in tmp_files if i.startswith('tmp_output')]
+    import shutil
+    
     if OUTPUT_FASTA is True:
         print()
-        fasta_name_out = 'output_'+os.path.split(FILE_IN)[1]
-        print('Output FASTA file '+fasta_name_out)
-        with open(fasta_name_out,'w') as output:
-            for i in enumerate(names):
-                print(i[1]+':'+str(max(predictions[i[0]]))+':'+labels[i[0]], file=output)
-                print(reads[i[0]], file=output)
-                
-    
-    print()
-    print('Using '+str(THRESHOLD_PREDICTION)+' thresholds to filter predictions...')
-    
-    predictions_high_acc = []
-    names_high_acc = []
-    for i in enumerate(predictions):
-        if max(i[1]) > THRESHOLD_PREDICTION:
-            predictions_high_acc.append(i[1])
-            names_high_acc.append(names[i[0]])
+        print('Writting final output FASTA '+OUTPUTDIR+'/output_pacific.fasta')
+        with open('output_PACIFIC.fasta','wb') as wfd:
+            for f in tmp_files:
+                with open(OUTPUTDIR+'/'+f,'rb') as fd:
+                    shutil.copyfileobj(fd, wfd)
 
-    labels = label_maker.inverse_transform(np.array(predictions_high_acc), threshold=THRESHOLD_PREDICTION)
+    for delete_file in tmp_files:
+        os.remove(OUTPUTDIR+'/'+delete_file)
+        print()
+        print('Deleting temporary file '+delete_file)
     
-    df = pd.DataFrame(predictions_high_acc, columns = ['Coronaviridae',
-                                                       'Human',
-                                                       'Influenza',
-                                                       'Metapneumovirus',
-                                                       'Rhinovirus',
-                                                       'Sars_cov_2'])
     
-    df['Read_id'] = names_high_acc
+    processed_reads = len(total_results['Influenza'])+\
+                      len(total_results['Coronaviridae'])+\
+                      len(total_results['Metapneumovirus'])+\
+                      len(total_results['Rhinovirus'])+\
+                      len(total_results['Sars_cov_2'])+\
+                      len(total_results['Human'])
     
-    df['Labels'] = labels
+    print()
+    print('From a total of '+str(total_sequences)+' reads, '+str(total_sequences - processed_reads)+\
+          ' were discarded, (probabbly due to non-standart nucleotides or too short reads)')
     
-    cols = ['Read_id',
-            'Coronaviridae',
-            'Human',
-            'Influenza',
-            'Metapneumovirus',
-            'Rhinovirus',
-            'Sars_cov_2',
-            'Labels'
-            ]
+    df_results = pd.DataFrame()
     
-    df = df[cols]
+    df_results['Class'] = ['SARS-CoV-2', 'Coronaviridae', 
+                           'Influenza', 'Metapneumovirus', 
+                           'Rhinovirus','Human']
+
+    df_results['# predicted reads'] = [len(total_results['Sars_cov_2']),
+                                       len(total_results['Coronaviridae']),
+                                       len(total_results['Influenza']),
+                                       len(total_results['Metapneumovirus']),
+                                       len(total_results['Rhinovirus']),
+                                       len(total_results['Human'])
+                                          ]
     
-    Coronaviridae = len(labels[labels == 'Coronaviridae']) / len(labels) * 100
-    Human = len(labels[labels == 'Human']) / len(labels) * 100
-    Influenza =  len(labels[labels == 'Influenza']) / len(labels) * 100
-    Metapneumovirus =  len(labels[labels == 'Metapneumovirus']) / len(labels) * 100
-    Rhinovirus =  len(labels[labels == 'Rhinovirus']) / len(labels) * 100
-    Sars_cov_2 =  len(labels[labels == 'Sars_cov_2']) / len(labels) * 100
+    percentage = {}
+    for classes in total_results:
+        number_class = len(total_results[classes])
+        percentage[classes] = ( number_class/ processed_reads) *100
     
-    results = {'Influenza':   Influenza,
-               'Coronaviridae': Coronaviridae,
-               'Metapneumovirus': Metapneumovirus,
-               'Rhinovirus':  Rhinovirus,
-               'Sars_cov_2':  Sars_cov_2
-               }
+    df_results['# predicted reads (%)'] = [percentage['Sars_cov_2'],
+                                           percentage['Coronaviridae'],
+                                           percentage['Influenza'],
+                                           percentage['Metapneumovirus'],
+                                           percentage['Rhinovirus'],
+                                           percentage['Human']
+                                          ]
+    threshold_reads = {}
+    total_threshold_reads = 0
+    for classes in total_results:
+        numpy_class = np.array(total_results[classes])
+        threshold_reads[classes] = len(numpy_class[numpy_class > THRESHOLD_PREDICTION])
+        total_threshold_reads +=threshold_reads[classes]
+    
+    df_results['# predicted reads above '+str(THRESHOLD_PREDICTION)] = [threshold_reads['Sars_cov_2'],
+                                                                        threshold_reads['Coronaviridae'],
+                                                                        threshold_reads['Influenza'],
+                                                                        threshold_reads['Metapneumovirus'],
+                                                                        threshold_reads['Rhinovirus'],
+                                                                        threshold_reads['Human']
+                                                                       ]
+    
+    df_results['# predicted reads above '+str(THRESHOLD_PREDICTION)+' (%)'] = \
+               [threshold_reads['Sars_cov_2']/total_threshold_reads*100 ,
+                threshold_reads['Coronaviridae']/total_threshold_reads*100,
+                threshold_reads['Influenza']/total_threshold_reads*100,
+                threshold_reads['Metapneumovirus']/total_threshold_reads*100,
+                threshold_reads['Rhinovirus']/total_threshold_reads*100,
+                threshold_reads['Human']/total_threshold_reads*100
+               ]
     
     
     print()
-    print('Saving output file to ', FILE_OUT)
-    
-    df.to_csv(FILE_OUT, sep='\t')
-    
-    print('From a total of '+str(len(kmer_sequences))+' 150bp reads, '+
-          str(len(kmer_sequences) - len(predictions_high_acc))+' predictions are below the'+\
-          'threshold and were discarted from the results')
-    
-    
-    print()
-    print('Relative proportion of virus in the sample')
-    print()
-    
-    # specify the number of discarted reads
-    
-    
-    print('Coronaviridae: ', Coronaviridae)
-    
-    print('Human: ', Human)
-    
-    print('Influenza', Influenza)
-    
-    print('Metapneumovirus', Metapneumovirus)
-    
-    print('Rhinovirus', Rhinovirus)
-    
-    print('Sars_cov_2', Sars_cov_2)
-    print()
-    print('Virus group proportions that overpass the empirical threshold are: ')
-    
-    limit_detection = {'Influenza': 0.001,
-                       'Coronaviridae': 0.009,
-                       'Metapneumovirus': 0.001,
-                       'Rhinovirus': 0.0242,
-                       'Sars_cov_2': 0.017 
-                      }
-    
-    virus_positive = []
-    for virus in results:
-        if results[virus] > limit_detection[str(virus)]:
-            virus_positive.append((str(virus)))
-    
-    if not virus_positive:
-        print('None')
-    else:
-        print(' '.join(virus_positive))
-    
+    print(df_results)
+    df_results.to_csv(OUTPUTDIR+'/output_PACIFIC.txt')
     print()
     print('Thank you for using PACIFIC =^)')
     
