@@ -3,14 +3,12 @@
 PACIFIC: A lightweight alignment-free deep-learning classifier of SARS-CoV-2 and co-infecting viral sequences  
 !!!!!!Add preprint link once submitted
 
-PACIFIC implements deep learning to classify RNA sequencing reads into human, SARS-CoV-2 or additional respiratory viruses.
-
-PACIFIC takes an input FASTA/FASTQ file and predicts the presence of the following viruses and their relative proportions within a sample:
+PACIFIC implements deep learning to classify RNA sequencing reads into human, SARS-CoV-2 or additional respiratory viruses. PACIFIC takes an input FASTA/FASTQ file and predicts the presence of the following viruses and their relative proportions within a sample:
 - SARS-CoV-2
 - 128 taxonomic units from Influenza
 - 5 species from Metapneumovirus
 - 130 species from Rhinovirus 
-- 11 species from Coronaviridae (non-SARS-CoV-2).
+- 11 species from Coronaviridae (non-SARS-CoV-2)
 
 ## Table of Contents
 
@@ -31,7 +29,7 @@ python ./scripts/PACIFIC.py -i ./testdata/testdata.fa -m ./model/pacific.01.paci
 ```
 !!!!!!!Describe expected output
 
-### System requirements
+## System requirements
 - Python 3.X+ (python.org/) with the following libraries:
     - Bio (v.)
     - sklearn (v.)
