@@ -84,8 +84,9 @@ ARGS = parser.parse_args()
 # Inputs
 FILE_IN = ARGS.FILE_IN
 MODEL = ARGS.model
-TOKENIZER = ARGS.tokenizer
-LABEL_MAKER = ARGS.label_maker
+dirname = os.path.dirname(__file__)
+TOKENIZER = os.path.join(dirname, '../model', 'tokenizer.01.pacific_9mers.pickle')
+LABEL_MAKER = os.path.join(dirname, '../model', 'label_maker.01.pacific_9mers.pickle')
 
 
 # Arguments
