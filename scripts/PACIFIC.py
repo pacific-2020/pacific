@@ -3,12 +3,12 @@
 """
 Created on Wed Apr 15 09:32:02 2020
 
-PACIFIC takes as input a FASTA/FASTQ file and predict presence of viruses:
-    SARS-CoV-2
-    128 taxonomic units from Influenza
-    5 from metapneumovirus
-    130 species from rhinovirus 
-    11 species from Coronaviridae (non-SARS-CoV-2).
+PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the following viruses and their relative sample proportions:
+        SARS-CoV-2;
+        128 taxonomic units from Influenza,
+        5 species from Metapneumovirus,
+        130 species from Rhinovirus, and
+        11 species from Coronaviridae (non-SARS-CoV-2).                                
 
 @author: Pablo Acera
 
@@ -18,15 +18,15 @@ import argparse
 
 parser = argparse.ArgumentParser(prog='PACIFIC v0.1', description=
                                  """ 
-                                 PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the following viruses:
+                                 PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the following viruses and their relative sample proportions:
                                  SARS-CoV-2;
                                  128 taxonomic units from Influenza,
                                  5 species from Metapneumovirus,
                                  130 species from Rhinovirus, and
                                  11 species from Coronaviridae (non-SARS-CoV-2).
                                  
-                                 We recommend that a user uses default parameters to ensure high accuracy.
-                                 """, usage='python PACIFIC.py [options] -i <in.fa>|<in.fq>\nversion: %(prog)s')
+                                 We recommend that users use default parameters to ensure high accuracy.
+                                 """, usage='python PACIFIC.py [options] -i <in.fa>|<in.fq> -m <model> -t <tokenizer> -l <label-maker>\nversion: %(prog)s')
 
 OPTIONAL = parser._action_groups.pop()
 REQUIRED = parser.add_argument_group('required arguments')
@@ -56,13 +56,13 @@ REQUIRED.add_argument("-l", "--label_maker",
 
 #arguments
 OPTIONAL.add_argument("-f", "--file_type",
-                      help='FASTA or FASTQ training files format (all files should have the same format) [fasta]',
+                      help='FASTA or FASTQ training file format [fasta]',
                       metavar='<fasta/fastq>',
                       default='fasta',
                       )
 
 OPTIONAL.add_argument("-o", "--outputdir",
-                      help='path to the output directory [.]',
+                      help='Path to output directory [.]',
                       metavar='<dir>',
                       default="")
 
@@ -72,7 +72,7 @@ OPTIONAL.add_argument("-o", "--outputdir",
 #                      type=int)
 
 OPTIONAL.add_argument("-T", "--prediction_threshold",
-                      help='Threshold/cutoff to use for predictions [0.95]',
+                      help='Threshold/cutoff for predictions [0.95]',
                       metavar='<float>',
                       default=0.95,
                       type=int
