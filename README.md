@@ -40,7 +40,8 @@ python ./scripts/PACIFIC.py -i ./testdata/testdata.fa -m ./model/pacific.01.paci
     - scikit-learn 0.21.3
     - cudatoolkit 10.1.168
     - cudnn 7.6.0
-    -
+    
+  (for more packages versions, look at pacific_versions.txt file)
 
 ## Usage
 
