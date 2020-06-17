@@ -31,11 +31,16 @@ python ./scripts/PACIFIC.py -i ./testdata/testdata.fa -m ./model/pacific.01.paci
 
 ## System requirements
 - Python 3.X+ (python.org/) with the following libraries:
-    - Bio (v.)
-    - sklearn (v.)
-    - numPy (v.)
-    - keras (v.)
-    - tensorflow (v.)
+    - Bio 1.74
+    - sklearn 0.20.3
+    - numPy 1.16.4
+    - keras 2.2.4
+    - pandas 0.25.1
+    - tensorflow 1.14.0
+    - scikit-learn 0.21.3
+    - cudatoolkit 10.1.168
+    - cudnn 7.6.0
+    -
 
 ## Usage
 
