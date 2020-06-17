@@ -303,7 +303,7 @@ if __name__ == '__main__':
     
     print()
     print('From a total of '+str(total_sequences)+' reads, '+str(total_sequences - processed_reads)+\
-          ' were discarded, (probabbly due to non-standart nucleotides or too short reads)')
+          ' were discarded, (probably due to non-ACGT nucleotides/characters or short reads (<150bp))')
     
     df_results = pd.DataFrame()
     
