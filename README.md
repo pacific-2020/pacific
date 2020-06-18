@@ -42,7 +42,7 @@ python ../PACIFIC.py \
   -l ../model/label_maker.01.pacific_9mers.pickle
 ```
 
-If installed correctly, PACIFIC should generate pacificoutput_test.fa and test_summary.csv in the test directory, and should provide the following results in the terminal:
+If installed correctly, PACIFIC should generate pacificoutput_test.fa and test_summary.txt in the test directory, and should provide the following results in the terminal:
 
 ```
 From a total of 5000 reads, 0 were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))
@@ -125,7 +125,7 @@ For example, the following describes a sequence predicted to be of the Coronavir
 ```
 
 2. $input_summary.txt
-A csv file which summarises the number of predicted reads for each class and their predicted proportions (%)both in the entire dataset, as well as in predicted reads with a score above 0.95. This is the same information that is provided as output in the terminal when PACIFIC is run.
+A text file which summarises the number of predicted reads for each class and their predicted proportions (%)both in the entire dataset, as well as in predicted reads with a score above 0.95. This is the same information that is provided as output in the terminal when PACIFIC is run.
 
 ## Test and model data
 
