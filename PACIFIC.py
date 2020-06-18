@@ -138,23 +138,33 @@ def process_reads(sequences, kmer, names):
     '''
     r_reads = []
     new_names = []
+    complete_reads = []
+    # Create lists for the discarded reads
+    discarded_names = []
+    discarded_sequences = []
+    
     for i in enumerate(sequences):
         # check the reads does not contain weird characters
         if all(c in 'AGCT' for c in i[1].upper()) and len(i[1]) >= 150:
             read = i[1][:150]
+            complete_reads.append(read)
             r_reads.append(' '.join(read[x:x+kmer].upper() for x in range(len(read) - kmer + 1)))
             new_names.append(names[i[0]])
-    return r_reads, new_names
+        else:
+            discarded_names.append(names[i[0]])
+            discarded_sequences.append(sequences[i[0]])
+            
+    return r_reads, new_names, discarded_names, discarded_sequences, complete_reads
 
 
 def main(all_transcripts, names, k_mer_size):
     '''
     '''
-    reads, names_p = process_reads(all_transcripts, 
-                                   k_mer_size,
-                                   names)
+    reads, names_p, discarded_names, discarded_sequences, complete_reads  = process_reads(all_transcripts, 
+                                                                          k_mer_size,
+                                                                          names)
 
-    return all_transcripts, reads, names_p
+    return complete_reads, reads, names_p, discarded_names, discarded_sequences
 
 def accuracy(labels, predictions):
     '''
@@ -186,11 +196,11 @@ def predict_chunk(sequences,
     
     total_sequences += len(sequences)
     
-    reads, kmer_sequences, names = main(sequences,
-                                        names,
-                                        K_MERS,
-                                        )
-    
+    reads, kmer_sequences, names, discarded_names, discarded_sequences = main(sequences,
+                                                                                names,
+                                                                                K_MERS,
+                                                                                )
+                                            
     kmer_sequences = tokenizer.texts_to_sequences(kmer_sequences)
        
     predictions = model.predict(np.array(kmer_sequences))
@@ -204,6 +214,11 @@ def predict_chunk(sequences,
             print('>'+i[1]+':'+str(max(predictions[i[0]]))+':'+labels[i[0]], file=output)
             print(reads[i[0]], file=output)
             total_results[labels[i[0]]] += [max(predictions[i[0]])]
+        for j in enumerate(discarded_names):
+            print('>'+j[1]+':-1:discarded', file=output)
+            print(discarded_sequences[j[0]], file=output)
+
+
                 
     return total_results, total_sequences
 
@@ -364,7 +379,8 @@ if __name__ == '__main__':
     
     print()
     print(df_results)
-    df_results.to_csv(OUTPUTDIR+'/'+os.path.split(FILE_IN)[1].split('.')[0]+'_summary.csv')
+    df_results.to_csv(OUTPUTDIR+'/'+os.path.split(FILE_IN)[1].split('.')[0]+'_summary.csv',
+                      sep='\t')
     print()
     print('Thank you for using PACIFIC =^)')
     
