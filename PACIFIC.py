@@ -215,7 +215,7 @@ def predict_chunk(sequences,
             print(reads[i[0]], file=output)
             total_results[labels[i[0]]] += [max(predictions[i[0]])]
         for j in enumerate(discarded_names):
-            print('>'+j[1]+':-1:discarded', file=output)
+            print('>'+j[1]+':-1:Discarded', file=output)
             print(discarded_sequences[j[0]], file=output)
 
 
@@ -299,7 +299,7 @@ if __name__ == '__main__':
     fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN))
 
     print()
-    print('Writing final output FASTA '+OUTPUTDIR+'/output_pacific.fasta')
+    print('Writing final output FASTA '+fasta_name_out)
     with open(fasta_name_out,'wb') as wfd:
         for f in tmp_files:
             with open(OUTPUTDIR+'/'+f,'rb') as fd:
