@@ -125,6 +125,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import os
+import sys
 
 # hardcode paths to tokenizer and label maker
 dirname = os.path.dirname(__file__)
@@ -300,6 +301,10 @@ if __name__ == '__main__':
                       len(total_results['Rhinovirus'])+\
                       len(total_results['Sars_cov_2'])+\
                       len(total_results['Human'])
+                      
+    if len(processed_reads) == 0:
+        print('There is no processed reads')
+        sys.exit()
     
     print()
     print('From a total of '+str(total_sequences)+' reads, '+str(total_sequences - processed_reads)+\
