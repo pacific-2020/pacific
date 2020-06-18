@@ -264,14 +264,13 @@ if __name__ == '__main__':
             print()
             print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
         
-    print(sequences)
-    print(names)
-    total_results, total_sequences = predict_chunk(sequences,
-                                                   names,
-                                                   K_MERS,
-                                                   FILE_TYPE,
-                                                   total_results,
-                                                   total_sequences)
+    if len(sequences) > 0:
+        total_results, total_sequences = predict_chunk(sequences,
+                                                       names,
+                                                       K_MERS,
+                                                       FILE_TYPE,
+                                                       total_results,
+                                                       total_sequences)
     
     tmp_files = os.listdir(OUTPUTDIR)
     tmp_files = [i for i in tmp_files if i.startswith('tmp_output')]
