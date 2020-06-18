@@ -20,7 +20,7 @@ PACIFIC implements deep learning to classify RNA sequencing reads into human, SA
 
 ## Quick start
 
-### Download model file to local
+### Download model file to local directory
 
 !!!! Figure out where to store the model
 
@@ -28,7 +28,7 @@ PACIFIC implements deep learning to classify RNA sequencing reads into human, SA
 ```
 git clone https://github.com/pabloacera/pacific.git
 cd pacific/test;
-python ../scripts/PACIFIC.py \
+python ../PACIFIC.py \
   -i ./test.fa \
   -m ../model/pacific.01.pacific_9mers_nonGPU.h5 \
   -t ../model/tokenizer.01.pacific_9mers.pickle \
