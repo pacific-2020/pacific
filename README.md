@@ -17,6 +17,7 @@ PACIFIC implements deep learning to classify RNA sequencing reads into human, SA
 1. [Usage](#Usage)
 1. [Input](#Input)
 1. [Output](#Output)
+1. [Test and model data](#Test-and-model-data)
 
 ## Quick start
 
@@ -93,3 +94,7 @@ PACIFIC will output the following files:
 
 !!!!!Describe output files
 
+## Test and model data
+
+1. Model and test data are available [here](https://cloudstor.aarnet.edu.au/plus/s/sRLwF3IJQ12pNGQ)
+2. PACIFIC model is available [here](https://cloudstor.aarnet.edu.au/plus/s/Hwg20YRlua9a2OH)
