@@ -115,7 +115,7 @@ PACIFIC allows users to use their own custom training model, tokenizer and label
 ## Output
 PACIFIC will output the following files (using default parameters):
 
-1. pacificoutput_$input.fa
+1. pacificoutput_$input.fa:
 A fasta file with modified sequence headers from the input fasta file. PACIFIC includes the prediction class and score in the header, as well as whether the sequences are discarded when run through the program (e.g. non-ACGT nucleotides/characters or short reads (<150bp)). 
 
 For example, the following describes a sequence predicted to be of the Coronaviridae class with a prediction score of 0.97:
@@ -124,7 +124,7 @@ For example, the following describes a sequence predicted to be of the Coronavir
 >fastaheader:0.97:Coronaviridae
 ```
 
-2. $input_summary.txt
+2. $input_summary.txt:
 A text file which summarises the number of predicted reads for each class and their predicted proportions (%)both in the entire dataset, as well as in predicted reads with a score above 0.95. This is the same information that is provided as output in the terminal when PACIFIC is run.
 
 ## Test and model data
