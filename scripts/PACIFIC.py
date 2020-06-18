@@ -263,7 +263,9 @@ if __name__ == '__main__':
             names = []
             print()
             print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
-            
+        
+    print(sequences)
+    print(names)
     total_results, total_sequences = predict_chunk(sequences,
                                                    names,
                                                    K_MERS,
