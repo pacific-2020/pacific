@@ -17,7 +17,7 @@ PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the followin
 import argparse
 import os
 
-os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
+os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 
 parser = argparse.ArgumentParser(prog='PACIFIC v0.1', description=
                                  """ 
