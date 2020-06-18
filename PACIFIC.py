@@ -207,7 +207,7 @@ def predict_chunk(sequences,
     labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)
         
     print()
-    fasta_name_out = OUTPUTDIR+'/tmp_output_'+str(counter)
+    fasta_name_out = OUTPUTDIR+'/tmp_output_'+ os.path.basename(FILE_IN) +str(counter)
     print('Writing temporary output file '+fasta_name_out)
     with open(fasta_name_out,'w') as output:
         for i in enumerate(names):
