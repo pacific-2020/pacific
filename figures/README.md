@@ -2,7 +2,7 @@
 
 Virus genome assembly data and human cDNA data used in this study are available at https://cloudstor.aarnet.edu.au/plus/s/sRLwF3IJQ12pNGQ.
 1. `referencedata` directory contains merged assembly files per class
-2. `benchmarkdata` directory contains synthetic data used for benchmarking PACIFIC (precision, recall, accuracy, etc). Random seed for each simulation were set as `dataid + 2020`. Rerun of the data generation may not provide **identical** outcome as sequences <200nt in length from human transcriptome data were removed after generation of this data.
+2. `benchmarkdata` directory contains synthetic data used for benchmarking PACIFIC (precision, recall, accuracy, etc). Random seed for each simulation were set as `dataid + 2020`. Rerun of the data generation may not provide **identical** outcome as sequences <200nt in length from human transcriptome data were removed after generation of this data. Sumary statistics of benchmark metrics, however, should remain approximately same.
 
 
 ## Benchmark tests
