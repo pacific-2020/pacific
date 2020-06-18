@@ -1,4 +1,4 @@
-## Reference data
+## Data availability
 
 Virus genome assembly data and human cDNA data used in this study are available at https://cloudstor.aarnet.edu.au/plus/s/sRLwF3IJQ12pNGQ.
 1. `referencedata` directory contains merged assembly files per class
