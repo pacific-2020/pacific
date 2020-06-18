@@ -10,7 +10,7 @@ PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the followin
         130 species from Rhinovirus, and
         11 species from Coronaviridae (non-SARS-CoV-2).                                
 
-@author: Pablo Acera
+@author: Pablo Acera, Hardip Patel, Renzo Balboa
 
 """
 
@@ -110,6 +110,11 @@ FILE_TYPE = ARGS.file_type
 OUTPUTDIR = ARGS.outputdir
 THRESHOLD_PREDICTION = ARGS.prediction_threshold
 CHUNK_SIZE = ARGS.chunk_size
+
+#Suppress warnings
+#import warnings
+#warnings.filterwarnings('ignore',category=FutureWarning)
+#warnings.filterwarnings('ignore',category=UserWarning)
 
 # import other packages
 from Bio import SeqIO
