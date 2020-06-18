@@ -20,14 +20,16 @@ PACIFIC implements deep learning to classify RNA sequencing reads into human, SA
 
 ## Quick start
 
-### Download model file to local directory
-
-!!!! Figure out where to store the model
-
 ### Install and test PACIFIC
+
+Note: As the model file is ~300MB, we hosted this file Cloudstor.
+We recommend that users download this file and place it in the model directory as in the code below:
+
 ```
-git clone https://github.com/pabloacera/pacific.git
-cd pacific/test;
+git clone https://github.com/pacific-2020/pacific.git
+cd pacific/model
+wget MODEL FILE .
+cd ../test
 python ../PACIFIC.py \
   -i ./test.fa \
   -m ../model/pacific.01.pacific_9mers_nonGPU.h5 \
@@ -51,7 +53,6 @@ From a total of 5000 reads, 0 were discarded (e.g. non-ACGT nucleotides/characte
 Thank you for using PACIFIC =^)
 ```
 
-
 ## System requirements
 - Python 3.X+ (python.org/) with the following libraries:
     - Bio 1.74
@@ -64,7 +65,7 @@ Thank you for using PACIFIC =^)
     - cudatoolkit 10.1.168
     - cudnn 7.6.0
     
-  (for more package versions, view the pacific_versions.txt file)
+  (for a full list of package versions, view metadata/pacific_versions.txt)
 
 ## Usage
 
