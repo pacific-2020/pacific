@@ -15,6 +15,9 @@ PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the followin
 """
 
 import argparse
+import os
+
+os.environ['TF_CPP_MIN_LOG_LEVEL']='2'
 
 parser = argparse.ArgumentParser(prog='PACIFIC v0.1', description=
                                  """ 
@@ -83,12 +86,6 @@ OPTIONAL.add_argument("-c", "--chunk_size",
                       metavar='<int>',
                       default=50000,
                       type=int
-                      )                      
-
-OPTIONAL.add_argument("-O", "--output_fasta",
-                      help='If this option is "True", a FASTA file containing predictions for each read will be provided [False]',
-                      default=False,
-                      action='store_true'
                       )
 
 OPTIONAL.add_argument('-v', '--version', 
@@ -112,7 +109,6 @@ MODEL = ARGS.model
 FILE_TYPE = ARGS.file_type
 OUTPUTDIR = ARGS.outputdir
 THRESHOLD_PREDICTION = ARGS.prediction_threshold
-OUTPUT_FASTA = ARGS.output_fasta
 CHUNK_SIZE = ARGS.chunk_size
 
 # import other packages
@@ -124,7 +120,6 @@ import random
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import os
 import sys
 
 # hardcode paths to tokenizer and label maker
@@ -196,15 +191,14 @@ def predict_chunk(sequences,
     predictions = model.predict(np.array(kmer_sequences))
     labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)
         
-    if OUTPUT_FASTA is True:
-        print()
-        fasta_name_out = OUTPUTDIR+'/tmp_output_'+str(counter)
-        print('writting temporary output file '+fasta_name_out)
-        with open(fasta_name_out,'w') as output:
-            for i in enumerate(names):
-                print('>'+i[1]+':'+str(max(predictions[i[0]]))+':'+labels[i[0]], file=output)
-                print(reads[i[0]], file=output)
-                total_results[labels[i[0]]] += [max(predictions[i[0]])]
+    print()
+    fasta_name_out = OUTPUTDIR+'/tmp_output_'+str(counter)
+    print('writting temporary output file '+fasta_name_out)
+    with open(fasta_name_out,'w') as output:
+        for i in enumerate(names):
+            print('>'+i[1]+':'+str(max(predictions[i[0]]))+':'+labels[i[0]], file=output)
+            print(reads[i[0]], file=output)
+            total_results[labels[i[0]]] += [max(predictions[i[0]])]
                 
     return total_results, total_sequences
 
@@ -281,13 +275,12 @@ if __name__ == '__main__':
     tmp_files = [i for i in tmp_files if i.startswith('tmp_output')]
     import shutil
     
-    if OUTPUT_FASTA is True:
-        print()
-        print('Writting final output FASTA '+OUTPUTDIR+'/output_pacific.fasta')
-        with open('output_PACIFIC.fasta','wb') as wfd:
-            for f in tmp_files:
-                with open(OUTPUTDIR+'/'+f,'rb') as fd:
-                    shutil.copyfileobj(fd, wfd)
+    print()
+    print('Writting final output FASTA '+OUTPUTDIR+'/output_pacific.fasta')
+    with open('output_PACIFIC.fasta','wb') as wfd:
+        for f in tmp_files:
+            with open(OUTPUTDIR+'/'+f,'rb') as fd:
+                shutil.copyfileobj(fd, wfd)
 
     for delete_file in tmp_files:
         os.remove(OUTPUTDIR+'/'+delete_file)
