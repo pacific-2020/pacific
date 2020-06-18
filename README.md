@@ -17,6 +17,7 @@ PACIFIC implements deep learning to classify RNA sequencing reads into human, SA
 1. [Usage](#Usage)
 1. [Input](#Input)
 1. [Output](#Output)
+1. [Test and model data](#Test-and-model-data)
 
 ## Quick start
 
@@ -120,3 +121,7 @@ A fasta file with modified sequence headers from the input fasta file. PACIFIC i
 - output_PACIFIC.txt
 A csv file which summarises the number of predicted reads for each class and their predicted proportions (%)both in the entire dataset, as well as in predicted reads with a score above 0.95. This is the same information that is provided as output into the terminal when PACIFIC is run.
 
+## Test and model data
+
+1. Model and test data are available [here](https://cloudstor.aarnet.edu.au/plus/s/sRLwF3IJQ12pNGQ)
+2. PACIFIC model is available [here](https://cloudstor.aarnet.edu.au/plus/s/Hwg20YRlua9a2OH)
