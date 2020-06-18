@@ -27,7 +27,7 @@ PACIFIC implements deep learning to classify RNA sequencing reads into human, SA
 git clone https://github.com/pabloacera/pacific.git
 cd pacific;
 python ./PACIFIC.py \
-  -i ./test/testdata.fa \
+  -i ./test/test.fa \
   -m ./model/pacific.01.pacific_9mers_nonGPU.h5 \
   -t ./model/tokenizer.01.pacific_9mers.pickle \
   -l ./model/label_maker.01.pacific_9mers.pickle
@@ -46,7 +46,7 @@ python ./PACIFIC.py \
     - cudatoolkit 10.1.168
     - cudnn 7.6.0
     
-  (for more packages versions, look at pacific_versions.txt file)
+  (for more package versions, view the pacific_versions.txt file)
 
 ## Usage
 
