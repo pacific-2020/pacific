@@ -10,7 +10,7 @@ PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the followin
         130 species from Rhinovirus, and
         11 species from Coronaviridae (non-SARS-CoV-2).                                
 
-@author: Pablo Acera
+@author: Pablo Acera, Hardip Patel, Renzo Balboa
 
 """
 
