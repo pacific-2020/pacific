@@ -193,7 +193,7 @@ def predict_chunk(sequences,
         
     print()
     fasta_name_out = OUTPUTDIR+'/tmp_output_'+str(counter)
-    print('writting temporary output file '+fasta_name_out)
+    print('Writing temporary output file '+fasta_name_out)
     with open(fasta_name_out,'w') as output:
         for i in enumerate(names):
             print('>'+i[1]+':'+str(max(predictions[i[0]]))+':'+labels[i[0]], file=output)
@@ -277,7 +277,7 @@ if __name__ == '__main__':
     import shutil
     
     print()
-    print('Writting final output FASTA '+OUTPUTDIR+'/output_pacific.fasta')
+    print('Writing final output FASTA '+OUTPUTDIR+'/output_pacific.fasta')
     with open('output_PACIFIC.fasta','wb') as wfd:
         for f in tmp_files:
             with open(OUTPUTDIR+'/'+f,'rb') as fd:
@@ -302,7 +302,7 @@ if __name__ == '__main__':
     
     print()
     print('From a total of '+str(total_sequences)+' reads, '+str(total_sequences - processed_reads)+\
-          ' were discarded, (e.g. non-ACGT nucleotides/characters or short reads (<150bp))')
+          ' were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))')
     
     df_results = pd.DataFrame()
     
