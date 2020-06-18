@@ -15,9 +15,9 @@ PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the followin
 """
 
 import argparse
+import sys
+import warnings
 import os
-
-os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 
 parser = argparse.ArgumentParser(prog='PACIFIC v0.1', description=
                                  """ 
@@ -252,7 +252,6 @@ if __name__ == '__main__':
         names.append(name)
         counter +=1
         if counter%CHUNK_SIZE == 0:
-            
             total_results, total_sequences = predict_chunk(sequences,
                                                            names,
                                                            K_MERS,
@@ -275,10 +274,13 @@ if __name__ == '__main__':
     tmp_files = os.listdir(OUTPUTDIR)
     tmp_files = [i for i in tmp_files if i.startswith('tmp_output')]
     import shutil
-    
+
+
+    fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput" + os.path.basename(FILE_IN))
+
     print()
     print('Writing final output FASTA '+OUTPUTDIR+'/output_pacific.fasta')
-    with open('output_PACIFIC.fasta','wb') as wfd:
+    with open(fasta_name_out,'wb') as wfd:
         for f in tmp_files:
             with open(OUTPUTDIR+'/'+f,'rb') as fd:
                 shutil.copyfileobj(fd, wfd)
@@ -357,7 +359,7 @@ if __name__ == '__main__':
     
     print()
     print(df_results)
-    df_results.to_csv(OUTPUTDIR+'/output_PACIFIC.txt')
+    df_results.to_csv(OUTPUTDIR+'/'+os.path.split(FILE_IN)[1][:-6]+'_summary.csv')
     print()
     print('Thank you for using PACIFIC =^)')
     
