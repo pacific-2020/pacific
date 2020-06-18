@@ -268,7 +268,7 @@ if __name__ == '__main__':
             sequences = []
             names = []
             print()
-            print('predictig reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
+            print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
             
     total_results, total_sequences = predict_chunk(sequences,
                                                    names,
@@ -303,12 +303,12 @@ if __name__ == '__main__':
                       len(total_results['Human'])
                       
     if processed_reads == 0:
-        print('There is no processed reads')
+        print('There are no processed reads')
         sys.exit()
     
     print()
     print('From a total of '+str(total_sequences)+' reads, '+str(total_sequences - processed_reads)+\
-          ' were discarded, (probably due to non-ACGT nucleotides/characters or short reads (<150bp))')
+          ' were discarded, (e.g. non-ACGT nucleotides/characters or short reads (<150bp))')
     
     df_results = pd.DataFrame()
     
