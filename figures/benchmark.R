@@ -1,7 +1,7 @@
-library(tidyverse)
 library(Rmisc)
 library(ggplot2)
 library(gridExtra)
+library(tidyverse)
 
 calcmetrics <- function(a, datatype, givenlabel) {
 
@@ -50,8 +50,7 @@ calcmetrics <- function(a, datatype, givenlabel) {
   prerec
 }
 
-predictions <- read.table("~/p95allpredictions.txt", sep = "\t")
-colnames(predictions) <- c("dataid", "knownlabel", "readtype", "predictedlabel", "readcounts")
+predictions <- read.table("pacific/figures/benchmarkresults.txt", sep = "\t", header = T)
 
 predictionmetrics <- data.frame()
 for (did in paste("T",seq(1:100),sep="")){
