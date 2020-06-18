@@ -364,7 +364,7 @@ if __name__ == '__main__':
     
     print()
     print(df_results)
-    df_results.to_csv(OUTPUTDIR+'/'+os.path.split(FILE_IN)[1][:-6]+'_summary.csv')
+    df_results.to_csv(OUTPUTDIR+'/'+os.path.split(FILE_IN)[1].split('.')[0]+'_summary.csv')
     print()
     print('Thank you for using PACIFIC =^)')
     
