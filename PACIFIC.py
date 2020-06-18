@@ -281,7 +281,7 @@ if __name__ == '__main__':
     import shutil
 
 
-    fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput" + os.path.basename(FILE_IN))
+    fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN))
 
     print()
     print('Writing final output FASTA '+OUTPUTDIR+'/output_pacific.fasta')
