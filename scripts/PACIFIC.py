@@ -302,7 +302,7 @@ if __name__ == '__main__':
                       len(total_results['Sars_cov_2'])+\
                       len(total_results['Human'])
                       
-    if len(processed_reads) == 0:
+    if processed_reads == 0:
         print('There is no processed reads')
         sys.exit()
     
