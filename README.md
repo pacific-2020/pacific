@@ -20,7 +20,7 @@ PACIFIC implements deep learning to classify RNA sequencing reads into human, SA
 
 ## Quick start
 
-## Download model file to local
+### Download model file to local
 
 !!!! Figure out where to store the model
 
