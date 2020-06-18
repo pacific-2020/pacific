@@ -20,19 +20,37 @@ PACIFIC implements deep learning to classify RNA sequencing reads into human, SA
 
 ## Quick start
 
-## Download model file
+## Download model file to local
+
+!!!! Figure out where to store the model
 
 ### Install and test PACIFIC
 ```
 git clone https://github.com/pabloacera/pacific.git
-cd pacific;
-python ./PACIFIC.py \
-  -i ./test/test.fa \
-  -m ./model/pacific.01.pacific_9mers_nonGPU.h5 \
-  -t ./model/tokenizer.01.pacific_9mers.pickle \
-  -l ./model/label_maker.01.pacific_9mers.pickle
+cd pacific/test;
+python ../scripts/PACIFIC.py \
+  -i ./test.fa \
+  -m ../model/pacific.01.pacific_9mers_nonGPU.h5 \
+  -t ../model/tokenizer.01.pacific_9mers.pickle \
+  -l ../model/label_maker.01.pacific_9mers.pickle
 ```
-!!!!!!!Describe expected output from test file
+
+If installed correctly, PACIFIC should create output_PACIFIC.fasta and output_PACIFIC.txt in the test directory, and should provide the following results in the terminal:
+
+```
+From a total of 5000 reads, 0 were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))
+
+             Class  # predicted reads  # predicted reads (%)  # predicted reads above 0.95  # predicted reads above 0.95 (%)
+0       SARS-CoV-2                  0                   0.00                             0                               0.0
+1    Coronaviridae               4998                  99.96                          4998                             100.0
+2        Influenza                  0                   0.00                             0                               0.0
+3  Metapneumovirus                  0                   0.00                             0                               0.0
+4       Rhinovirus                  1                   0.02                             0                               0.0
+5            Human                  1                   0.02                             0                               0.0
+
+Thank you for using PACIFIC =^)
+```
+
 
 ## System requirements
 - Python 3.X+ (python.org/) with the following libraries:
@@ -41,7 +59,7 @@ python ./PACIFIC.py \
     - numPy 1.16.4
     - keras 2.2.4
     - pandas 0.25.1
-    - tensorflow 1.14.0
+    - tensorflow 2.2.0
     - scikit-learn 0.21.3
     - cudatoolkit 10.1.168
     - cudnn 7.6.0
@@ -89,7 +107,15 @@ PACIFIC expects four arguments as input:
 PACIFIC allows users to use their own custom training model, tokenizer and label maker files. However, we recommend the use of default parameters and the following files above as input into the program.
 
 ## Output
-PACIFIC will output the following files:
+PACIFIC will output the following files (using default parameters):
 
-!!!!!Describe output files
+- output_PACIFIC.fasta
+A fasta file with modified sequence headers from the input fasta file. PACIFIC includes the prediction class and score in the header. For example, the following describes a sequence predicted to be of the Coronaviridae class with a prediction score of 0.97:
+
+```
+>fastaheader:0.97:Coronaviridae
+```
+
+- output_PACIFIC.txt
+A csv file which summarises the number of predicted reads for each class and their predicted proportions (%)both in the entire dataset, as well as in predicted reads with a score above 0.95. This is the same information that is provided as output into the terminal when PACIFIC is run.
 
