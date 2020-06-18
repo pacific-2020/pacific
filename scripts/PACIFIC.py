@@ -111,6 +111,11 @@ OUTPUTDIR = ARGS.outputdir
 THRESHOLD_PREDICTION = ARGS.prediction_threshold
 CHUNK_SIZE = ARGS.chunk_size
 
+#Suppress warnings
+#import warnings
+#warnings.filterwarnings('ignore',category=FutureWarning)
+#warnings.filterwarnings('ignore',category=UserWarning)
+
 # import other packages
 from Bio import SeqIO
 
