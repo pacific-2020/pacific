@@ -1,0 +1,8 @@
+Class	# predicted reads	predicted reads (%)	# predicted reads above 0.95	predicted reads above 0.95 (%)
+SARS-CoV-2	0	0.0	0	0.0
+Coronaviridae	4998	99.96000000000001	4998	99.96000000000001
+Influenza	0	0.0	0	0.0
+Metapneumovirus	0	0.0	0	0.0
+Rhinovirus	1	0.02	0	0.0
+Human	1	0.02	0	0.0
+Discarded	0	0.0	0	0.0
