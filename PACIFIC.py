@@ -388,6 +388,6 @@ if __name__ == '__main__':
     print()
     print(df_results.to_string(index=False))
     df_results.to_csv(OUTPUTDIR+'/'+os.path.basename(FILE_IN)+'_summary.txt',
-                      sep='\t', index=False)
+                      sep='\t', index=False, float_format='%g')
     print()
     print('Thank you for using PACIFIC =^)')

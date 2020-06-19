@@ -47,13 +47,14 @@ If installed correctly, PACIFIC should generate pacificoutput_test.fa.gz and tes
 ```
 From a total of 5000 reads, 0 were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))
 
-             Class  # predicted reads  # predicted reads (%)  # predicted reads above 0.95  # predicted reads above 0.95 (%)
-0       SARS-CoV-2                  0                   0.00                             0                               0.0
-1    Coronaviridae               4998                  99.96                          4998                             100.0
-2        Influenza                  0                   0.00                             0                               0.0
-3  Metapneumovirus                  0                   0.00                             0                               0.0
-4       Rhinovirus                  1                   0.02                             0                               0.0
-5            Human                  1                   0.02                             0                               0.0
+filename            class  # predicted reads  predicted reads (%)  # predicted reads above 0.95  predicted reads above 0.95 (%)
+ test.fa.gz       SARS-CoV-2                  0                 0.00                             0                            0.00
+ test.fa.gz    Coronaviridae               4998                99.96                          4998                           99.96
+ test.fa.gz        Influenza                  0                 0.00                             0                            0.00
+ test.fa.gz  Metapneumovirus                  0                 0.00                             0                            0.00
+ test.fa.gz       Rhinovirus                  1                 0.02                             0                            0.00
+ test.fa.gz            Human                  1                 0.02                             0                            0.00
+ test.fa.gz        Discarded                  0                 0.00                             0                            0.00
 
 Thank you for using PACIFIC =^)
 ```
