@@ -1,0 +1,8 @@
+	filename	class	# predicted reads	predicted reads (%)	# predicted reads above 0.95	predicted reads above 0.95 (%)
+0	test.fa.gz	SARS-CoV-2	0	0.0	0	0.0
+1	test.fa.gz	Coronaviridae	4998	99.96000000000001	4998	99.96000000000001
+2	test.fa.gz	Influenza	0	0.0	0	0.0
+3	test.fa.gz	Metapneumovirus	0	0.0	0	0.0
+4	test.fa.gz	Rhinovirus	1	0.02	0	0.0
+5	test.fa.gz	Human	1	0.02	0	0.0
+6	test.fa.gz	Discarded	0	0.0	0	0.0
