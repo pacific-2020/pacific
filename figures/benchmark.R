@@ -43,6 +43,7 @@ calcmetrics <- function(a, datatype, givenlabel) {
                        precision = precision,
                        recall = recall,
                        accuracy = accuracy,
+                       balancedaccuracy = (tpr + tnr)/2,
                        f1 = f1,
                        discarded = discarded,
                        pdiscarded = pdiscarded
@@ -77,6 +78,19 @@ predictionmetrics %>% filter(datatype == "mm") %>% summarySE(measurevar = "preci
 predictionmetrics %>% filter(datatype == "mm") %>% summarySE(measurevar = "recall", groupvars = c("class")) %>% arrange(recall)
 predictionmetrics %>% filter(datatype == "mm") %>% summarySE(measurevar = "accuracy", groupvars = c("class")) %>% arrange(accuracy)
 
+left_join(filter(predictionmetrics, datatype == "mm") %>% group_by(class) %>% dplyr::summarise(min = min(precision), max = max(precision)),
+          filter(predictionmetrics, datatype == "mm") %>% summarySE(measurevar = "precision", groupvars = c("class"))
+          )
+
+left_join(filter(predictionmetrics, datatype == "mm") %>% group_by(class) %>% dplyr::summarise(min = min(balancedaccuracy), max = max(balancedaccuracy)),
+          filter(predictionmetrics, datatype == "mm") %>% summarySE(measurevar = "balancedaccuracy", groupvars = c("class"))
+)
+
+
+
+
+
+          
 predictionmetrics %>% filter(datatype == "all") %>% summarySE(measurevar = "fpr", groupvars = c("class")) %>% arrange(fpr)
 
 
