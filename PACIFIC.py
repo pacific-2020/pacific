@@ -262,7 +262,11 @@ if __name__ == '__main__':
                      }
     
     total_sequences = 0
-    fasta_sequences = SeqIO.parse(open(FILE_IN), FILE_TYPE)
+    if FILE_IN.endswith(".gz"):
+        import gzip
+        fasta_sequences = SeqIO.parse(gzip.open(FILE_IN, mode='rt'), FILE_TYPE)
+    else: 
+        fasta_sequences = SeqIO.parse(open(FILE_IN), FILE_TYPE)
     sequences = []
     names = []
     counter = 0
