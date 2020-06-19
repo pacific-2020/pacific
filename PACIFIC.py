@@ -316,47 +316,47 @@ if __name__ == '__main__':
         print()
         print('Deleting temporary file '+delete_file)
     
-    
-    processed_reads = len(total_results['Influenza'])+\
+     processed_reads = len(total_results['Influenza'])+\
                       len(total_results['Coronaviridae'])+\
                       len(total_results['Metapneumovirus'])+\
                       len(total_results['Rhinovirus'])+\
                       len(total_results['Sars_cov_2'])+\
                       len(total_results['Human'])
-                      
+    discarded_reads = total_sequences - process_reads                  
     if processed_reads == 0:
         print('There are no processed reads')
         sys.exit()
     
     print()
-    print('From a total of '+str(total_sequences)+' reads, '+str(total_sequences - processed_reads)+\
+    print('From a total of '+str(total_sequences)+' reads, '+str(discarded_reads)+\
           ' were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))')
     
     df_results = pd.DataFrame()
     
     df_results['Class'] = ['SARS-CoV-2', 'Coronaviridae', 
                            'Influenza', 'Metapneumovirus', 
-                           'Rhinovirus','Human']
+                           'Rhinovirus','Human','Discarded']
 
     df_results['# predicted reads'] = [len(total_results['Sars_cov_2']),
                                        len(total_results['Coronaviridae']),
                                        len(total_results['Influenza']),
                                        len(total_results['Metapneumovirus']),
                                        len(total_results['Rhinovirus']),
-                                       len(total_results['Human'])
+                                       len(total_results['Human']), discarded_reads
                                           ]
     
     percentage = {}
     for classes in total_results:
         number_class = len(total_results[classes])
-        percentage[classes] = ( number_class/ processed_reads) *100
-    
-    df_results['# predicted reads (%)'] = [percentage['Sars_cov_2'],
+        percentage[classes] = ( number_class/ total_sequences) *100
+    percentage['Discarded'] = discarded_reads * 100 / total_sequences
+    df_results['predicted reads (%)'] = [percentage['Sars_cov_2'],
                                            percentage['Coronaviridae'],
                                            percentage['Influenza'],
                                            percentage['Metapneumovirus'],
                                            percentage['Rhinovirus'],
-                                           percentage['Human']
+                                           percentage['Human'],
+                                           percentage['Discarded']
                                           ]
     threshold_reads = {}
     total_threshold_reads = 0
@@ -364,63 +364,30 @@ if __name__ == '__main__':
         numpy_class = np.array(total_results[classes])
         threshold_reads[classes] = len(numpy_class[numpy_class > THRESHOLD_PREDICTION])
         total_threshold_reads +=threshold_reads[classes]
-    
+    threshold_reads['Discarded'] = discarded_reads
     df_results['# predicted reads above '+str(THRESHOLD_PREDICTION)] = [threshold_reads['Sars_cov_2'],
                                                                         threshold_reads['Coronaviridae'],
                                                                         threshold_reads['Influenza'],
                                                                         threshold_reads['Metapneumovirus'],
                                                                         threshold_reads['Rhinovirus'],
-                                                                        threshold_reads['Human']
+                                                                        threshold_reads['Human'],
+                                                                        threshold_reads['Discarded']
                                                                        ]
     
-    df_results['# predicted reads above '+str(THRESHOLD_PREDICTION)+' (%)'] = \
-               [threshold_reads['Sars_cov_2']/total_threshold_reads*100 ,
-                threshold_reads['Coronaviridae']/total_threshold_reads*100,
-                threshold_reads['Influenza']/total_threshold_reads*100,
-                threshold_reads['Metapneumovirus']/total_threshold_reads*100,
-                threshold_reads['Rhinovirus']/total_threshold_reads*100,
-                threshold_reads['Human']/total_threshold_reads*100
+    df_results['predicted reads above '+str(THRESHOLD_PREDICTION)+' (%)'] = \
+               [threshold_reads['Sars_cov_2']/total_sequences*100 ,
+                threshold_reads['Coronaviridae']/total_sequences*100,
+                threshold_reads['Influenza']/total_sequences*100,
+                threshold_reads['Metapneumovirus']/total_sequences*100,
+                threshold_reads['Rhinovirus']/total_sequences*100,
+                threshold_reads['Human']/total_sequences*100,
+                threshold_reads['Discarded']/total_sequences*100
                ]
     
     
     print()
     print(df_results)
-    df_results.to_csv(OUTPUTDIR+'/'+os.path.basename(FILE_IN)+'_summary.txt',
-                      sep='\t')
+    df_results.to_csv(OUTPUTDIR+'/'+os.path.split(FILE_IN)[1].split('.')[0]+'_summary.txt',
+                      sep='\t', index=False)
     print()
     print('Thank you for using PACIFIC =^)')
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
