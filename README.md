@@ -36,24 +36,25 @@ wget -O model/pacific.01.pacific_9mers_nonGPU.h5 https://cloudstor.aarnet.edu.au
 #Change to test directory and run PACIFIC
 cd test
 python ../PACIFIC.py \
-  -i test.fa \
+  -i test.fa.gz \
   -m ../model/pacific.01.pacific_9mers_nonGPU.h5 \
   -t ../model/tokenizer.01.pacific_9mers.pickle \
   -l ../model/label_maker.01.pacific_9mers.pickle
 ```
 
-If installed correctly, PACIFIC should generate pacificoutput_test.fa and test_summary.csv in the test directory, and should provide the following results in the terminal:
+If installed correctly, PACIFIC should generate pacificoutput_test.fa.gz and test.fa.gz_summary.txt in the test directory, and should provide the following results in the terminal:
 
 ```
 From a total of 5000 reads, 0 were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))
 
-             Class  # predicted reads  # predicted reads (%)  # predicted reads above 0.95  # predicted reads above 0.95 (%)
-0       SARS-CoV-2                  0                   0.00                             0                               0.0
-1    Coronaviridae               4998                  99.96                          4998                             100.0
-2        Influenza                  0                   0.00                             0                               0.0
-3  Metapneumovirus                  0                   0.00                             0                               0.0
-4       Rhinovirus                  1                   0.02                             0                               0.0
-5            Human                  1                   0.02                             0                               0.0
+filename            class  # predicted reads  predicted reads (%)  # predicted reads above 0.95  predicted reads above 0.95 (%)
+ test.fa.gz       SARS-CoV-2                  0                 0.00                             0                            0.00
+ test.fa.gz    Coronaviridae               4998                99.96                          4998                           99.96
+ test.fa.gz        Influenza                  0                 0.00                             0                            0.00
+ test.fa.gz  Metapneumovirus                  0                 0.00                             0                            0.00
+ test.fa.gz       Rhinovirus                  1                 0.02                             0                            0.00
+ test.fa.gz            Human                  1                 0.02                             0                            0.00
+ test.fa.gz        Discarded                  0                 0.00                             0                            0.00
 
 Thank you for using PACIFIC =^)
 ```
@@ -105,7 +106,7 @@ usage: python PACIFIC.py [options] -i <in.fa>|<in.fq> -m <model> -t <tokenizer> 
 
 ## Input 
 PACIFIC expects four arguments as input: 
- - FASTA or FASTQ RNA-seq file
+ - FASTA or FASTQ RNA-seq file (can handle either gzipped or non-gzipped files)
  - Training model file (recommended: model/pacific.01.pacific_9mers_nonGPU.h5)
  - Tokenizer file (recommended: model/tokenizer.01.pacific_9mers.pickle)
  - Label maker file (recommended: model/label_maker.01.pacific_9mers.pickle)
@@ -115,17 +116,17 @@ PACIFIC allows users to use their own custom training model, tokenizer and label
 ## Output
 PACIFIC will output the following files (using default parameters):
 
-- pacificoutput_$input.fa
-A fasta file with modified sequence headers from the input fasta file. PACIFIC includes the prediction class and score in the header, as well as whether the sequences are discarded when run through the program (e.g. non-ACGT nucleotides/characters or short reads (<150bp)). 
+*1. pacificoutput_$input.gz:*
+A gzipped fasta file with modified sequence headers from the input fasta file. PACIFIC includes the prediction class and score in the header, as well as whether the sequences are discarded when run through the program (e.g. non-ACGT nucleotides/characters or short reads (<150bp)). 
 
-Example: the following describes a sequence predicted to be of the Coronaviridae class with a prediction score of 0.97:
+For example, the following describes a sequence predicted to be of the Coronaviridae class with a prediction score of 0.97:
 
 ```
 >fastaheader:0.97:Coronaviridae
 ```
 
-- $input_summary.txt
-A csv file which summarises the number of predicted reads for each class and their predicted proportions (%)both in the entire dataset, as well as in predicted reads with a score above 0.95. This is the same information that is provided as output into the terminal when PACIFIC is run.
+*2. $input_summary.txt:*
+A text file which summarises the number of predicted reads for each class and their predicted proportions (%)both in the entire dataset, as well as in predicted reads with a score above 0.95. This is the same information that is provided as output in the terminal when PACIFIC is run.
 
 ## Test and model data
 
