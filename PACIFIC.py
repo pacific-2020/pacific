@@ -208,7 +208,7 @@ def predict_chunk(sequences,
     labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)
         
     print()
-    fasta_name_out = OUTPUTDIR+'/tmp_output_'+ os.path.basename(FILE_IN) +str(counter)
+    fasta_name_out = OUTPUTDIR+'/tmp_output_'+ os.path.basename(FILE_IN) +'_'+str(counter)
     print('Writing temporary output file '+fasta_name_out)
     with open(fasta_name_out,'w') as output:
         for i in enumerate(names):
@@ -332,8 +332,8 @@ if __name__ == '__main__':
           ' were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))')
     
     df_results = pd.DataFrame()
-    df_results['filename'] = str(os.path.basename(FILE_IN))
-    df_results['Class'] = ['SARS-CoV-2', 'Coronaviridae', 
+    df_results['filename'] = 7*[os.path.basename(FILE_IN)]
+    df_results['class'] = ['SARS-CoV-2', 'Coronaviridae', 
                            'Influenza', 'Metapneumovirus', 
                            'Rhinovirus','Human','Discarded']
 
