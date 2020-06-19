@@ -332,7 +332,7 @@ if __name__ == '__main__':
           ' were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))')
     
     df_results = pd.DataFrame()
-    
+    df_results['filename'] = str(os.path.basename(FILE_IN))
     df_results['Class'] = ['SARS-CoV-2', 'Coronaviridae', 
                            'Influenza', 'Metapneumovirus', 
                            'Rhinovirus','Human','Discarded']
