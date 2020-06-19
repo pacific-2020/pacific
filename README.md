@@ -36,13 +36,13 @@ wget -O model/pacific.01.pacific_9mers_nonGPU.h5 https://cloudstor.aarnet.edu.au
 #Change to test directory and run PACIFIC
 cd test
 python ../PACIFIC.py \
-  -i test.fa \
+  -i test.fa.gz \
   -m ../model/pacific.01.pacific_9mers_nonGPU.h5 \
   -t ../model/tokenizer.01.pacific_9mers.pickle \
   -l ../model/label_maker.01.pacific_9mers.pickle
 ```
 
-If installed correctly, PACIFIC should generate pacificoutput_test.fa and test_summary.txt in the test directory, and should provide the following results in the terminal:
+If installed correctly, PACIFIC should generate pacificoutput_test.fa.gz and test.fa.gz_summary.txt in the test directory, and should provide the following results in the terminal:
 
 ```
 From a total of 5000 reads, 0 were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))
@@ -105,7 +105,7 @@ usage: python PACIFIC.py [options] -i <in.fa>|<in.fq> -m <model> -t <tokenizer> 
 
 ## Input 
 PACIFIC expects four arguments as input: 
- - FASTA or FASTQ RNA-seq file
+ - FASTA or FASTQ RNA-seq file (can handle either gzipped or non-gzipped files)
  - Training model file (recommended: model/pacific.01.pacific_9mers_nonGPU.h5)
  - Tokenizer file (recommended: model/tokenizer.01.pacific_9mers.pickle)
  - Label maker file (recommended: model/label_maker.01.pacific_9mers.pickle)
@@ -115,8 +115,8 @@ PACIFIC allows users to use their own custom training model, tokenizer and label
 ## Output
 PACIFIC will output the following files (using default parameters):
 
-1. pacificoutput_$input.fa:
-A fasta file with modified sequence headers from the input fasta file. PACIFIC includes the prediction class and score in the header, as well as whether the sequences are discarded when run through the program (e.g. non-ACGT nucleotides/characters or short reads (<150bp)). 
+1. pacificoutput_$input.gz:
+A gzipped fasta file with modified sequence headers from the input fasta file. PACIFIC includes the prediction class and score in the header, as well as whether the sequences are discarded when run through the program (e.g. non-ACGT nucleotides/characters or short reads (<150bp)). 
 
 For example, the following describes a sequence predicted to be of the Coronaviridae class with a prediction score of 0.97:
 

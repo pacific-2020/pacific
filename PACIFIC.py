@@ -126,6 +126,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import sys
+import gzip
 
 # hardcode paths to tokenizer and label maker
 dirname = os.path.dirname(__file__)
@@ -263,7 +264,6 @@ if __name__ == '__main__':
     
     total_sequences = 0
     if FILE_IN.endswith(".gz"):
-        import gzip
         fasta_sequences = SeqIO.parse(gzip.open(FILE_IN, mode='rt'), FILE_TYPE)
     else: 
         fasta_sequences = SeqIO.parse(open(FILE_IN), FILE_TYPE)
@@ -299,12 +299,14 @@ if __name__ == '__main__':
     tmp_files = [i for i in tmp_files if i.startswith('tmp_output')]
     import shutil
 
-
-    fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN))
+    if FILE_IN.endswith(".gz"):
+        fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN))
+    else: 
+        fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN)+".gz")  
 
     print()
     print('Writing final output FASTA '+fasta_name_out)
-    with open(fasta_name_out,'wb') as wfd:
+    with gzip.open(fasta_name_out,mode='wb') as wfd:
         for f in tmp_files:
             with open(OUTPUTDIR+'/'+f,'rb') as fd:
                 shutil.copyfileobj(fd, wfd)
@@ -383,7 +385,7 @@ if __name__ == '__main__':
     
     print()
     print(df_results)
-    df_results.to_csv(OUTPUTDIR+'/'+os.path.split(FILE_IN)[1].split('.')[0]+'_summary.txt',
+    df_results.to_csv(OUTPUTDIR+'/'+os.path.basename(FILE_IN)+'_summary.txt',
                       sep='\t')
     print()
     print('Thank you for using PACIFIC =^)')
