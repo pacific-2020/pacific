@@ -316,7 +316,7 @@ if __name__ == '__main__':
         print()
         print('Deleting temporary file '+delete_file)
     
-     processed_reads = len(total_results['Influenza'])+\
+    processed_reads = len(total_results['Influenza'])+\
                       len(total_results['Coronaviridae'])+\
                       len(total_results['Metapneumovirus'])+\
                       len(total_results['Rhinovirus'])+\
@@ -343,7 +343,7 @@ if __name__ == '__main__':
                                        len(total_results['Metapneumovirus']),
                                        len(total_results['Rhinovirus']),
                                        len(total_results['Human']), discarded_reads
-                                          ]
+                                        ]
     
     percentage = {}
     for classes in total_results:
