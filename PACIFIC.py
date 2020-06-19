@@ -322,7 +322,7 @@ if __name__ == '__main__':
                       len(total_results['Rhinovirus'])+\
                       len(total_results['Sars_cov_2'])+\
                       len(total_results['Human'])
-    discarded_reads = total_sequences - process_reads                  
+    discarded_reads = total_sequences - processed_reads                  
     if processed_reads == 0:
         print('There are no processed reads')
         sys.exit()
