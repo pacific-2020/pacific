@@ -82,7 +82,7 @@ OPTIONAL.add_argument("-T", "--prediction_threshold",
                       )
 
 OPTIONAL.add_argument("-c", "--chunk_size",
-                      help='Number of reads per chunk [10000]',
+                      help='Number of reads per chunk [100000]',
                       metavar='<int>',
                       default=100000,
                       type=int
@@ -112,9 +112,9 @@ THRESHOLD_PREDICTION = ARGS.prediction_threshold
 CHUNK_SIZE = ARGS.chunk_size
 
 #Suppress warnings
-#import warnings
-#warnings.filterwarnings('ignore',category=FutureWarning)
-#warnings.filterwarnings('ignore',category=UserWarning)
+import warnings
+warnings.filterwarnings('ignore',category=FutureWarning)
+warnings.filterwarnings('ignore',category=UserWarning)
 
 # import other packages
 from Bio import SeqIO
@@ -127,6 +127,11 @@ import pandas as pd
 import tensorflow as tf
 import sys
 import gzip
+
+#Suppress tensorflow warnings
+#tf.logging.set_verbosity(tf.logging.ERROR)
+#tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 
 # hardcode paths to tokenizer and label maker
 dirname = os.path.dirname(__file__)
@@ -296,7 +301,7 @@ if __name__ == '__main__':
                                                        total_sequences)
     
     tmp_files = os.listdir(OUTPUTDIR)
-    tmp_files = [i for i in tmp_files if i.startswith('tmp_output')]
+    tmp_files = [i for i in tmp_files if i.startswith('tmp_output_'+ os.path.basename(FILE_IN))]
     import shutil
 
     if FILE_IN.endswith(".gz"):
