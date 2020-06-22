@@ -128,6 +128,10 @@ import tensorflow as tf
 import sys
 import gzip
 
+#Suppress tensorflow warnings
+#tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+
 # hardcode paths to tokenizer and label maker
 dirname = os.path.dirname(__file__)
 #TOKENIZER = os.path.join(dirname, '../model', 'tokenizer.01.pacific_9mers.pickle')
