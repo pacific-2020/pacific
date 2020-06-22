@@ -301,7 +301,7 @@ if __name__ == '__main__':
                                                        total_sequences)
     
     tmp_files = os.listdir(OUTPUTDIR)
-    tmp_files = [i for i in tmp_files if i.startswith('tmp_output')]
+    tmp_files = [i for i in tmp_files if i.startswith('tmp_output_'+ os.path.basename(FILE_IN))]
     import shutil
 
     if FILE_IN.endswith(".gz"):
