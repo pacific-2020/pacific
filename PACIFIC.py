@@ -92,7 +92,6 @@ OPTIONAL.add_argument('-v', '--version',
                         action='version', 
                         version='%(prog)s')
 
-
 parser._action_groups.append(OPTIONAL)
 
 ARGS = parser.parse_args()
@@ -118,7 +117,7 @@ CHUNK_SIZE = ARGS.chunk_size
 
 # import other packages
 from Bio import SeqIO
-
+from Bio.Seq import Seq
 import pickle
 from keras.models import load_model
 import random
@@ -127,6 +126,8 @@ import pandas as pd
 import tensorflow as tf
 import sys
 import gzip
+import itertools
+import string
 
 # hardcode paths to tokenizer and label maker
 dirname = os.path.dirname(__file__)
@@ -183,7 +184,26 @@ def accuracy(labels, predictions):
     except:
         return 0
     
-    return correct/len(labels)
+    return correct/len(labels)    
+
+def predict_rc(reads, kmer):
+    '''
+    Make predictions of the reverse complement of the reads
+    '''
+    #reverse complement
+    reads_rc = []
+    for read in reads:
+        reads_rc.append(str(Seq(read).reverse_complement()))
+    
+    kmer_reads_rc = []
+    for i in enumerate(reads_rc):
+        kmer_reads_rc.append(' '.join(i[1][x:x+kmer].upper() for x in range(len(i[1]) - kmer + 1)))
+        
+    tokenize_kmers = tokenizer.texts_to_sequences(kmer_reads_rc)
+    predicted_reads = model.predict(np.array(tokenize_kmers))
+    
+    return label_maker.inverse_transform(np.array(predicted_reads), threshold=THRESHOLD_PREDICTION) 
+
 
 def predict_chunk(sequences,
                  names,
@@ -201,12 +221,37 @@ def predict_chunk(sequences,
                                                                                 names,
                                                                                 K_MERS,
                                                                                 )
-                                            
     kmer_sequences = tokenizer.texts_to_sequences(kmer_sequences)
        
     predictions = model.predict(np.array(kmer_sequences))
-    labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)
+    labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)    
+    
+    df_labels = pd.DataFrame({'labels': labels})
+    virus_predictions_index = df_labels[df_labels['labels'] != 'Human'].index.tolist()
+    
+    reads_np = np.array(reads)
+    reads_np = reads_np[virus_predictions_index]
+    
+    label_normal = np.array(labels)
+    label_normal = label_normal[virus_predictions_index]
+
+    labels_rc = predict_rc(reads_np, K_MERS)
+    
+    df_predictions = pd.DataFrame({'labels_n': label_normal,
+                                   'labels_rc': labels_rc})
+    
+    df_predictions['same'] = np.where((df_predictions['labels_n'] == df_predictions['labels_rc'])
+                                      ,'same', 'c_discarded')
+    
+    df_predictions['global_index'] = virus_predictions_index
+    
+    virus_predictions_wrong = df_predictions[df_predictions['same'] == 'c_discarded']['global_index']
+    
+    df_labels.loc[virus_predictions_wrong,'labels'] = 'rc_discarded'
+    
+    labels = df_labels['labels'].tolist()
         
+    
     print()
     fasta_name_out = OUTPUTDIR+'/tmp_output_'+ os.path.basename(FILE_IN) +'_'+str(counter)
     print('Writing temporary output file '+fasta_name_out)
@@ -218,8 +263,6 @@ def predict_chunk(sequences,
         for j in enumerate(discarded_names):
             print('>'+j[1]+':-1:Discarded', file=output)
             print(discarded_sequences[j[0]], file=output)
-
-
                 
     return total_results, total_sequences
 
@@ -227,10 +270,10 @@ def predict_chunk(sequences,
 if __name__ == '__main__':
 
     seed_value = 42
-    random.seed(seed_value)# 3. Set `numpy` pseudo-random generator at a fixed value
-    np.random.seed(seed_value)# 4. Set `tensorflow` pseudo-random generator at a fixed value
+    random.seed(seed_value) # 3. Set `numpy` pseudo-random generator at a fixed value
+    np.random.seed(seed_value) # 4. Set `tensorflow` pseudo-random generator at a fixed value
     try:
-        tf.random.set_seed(seed_value)# 5. For layers that introduce randomness like dropout, make sure to set seed values 
+        tf.random.set_seed(seed_value) # 5. For layers that introduce randomness like dropout, make sure to set seed values 
     except:
         tf.set_random_seed(seed_value)
     
@@ -259,7 +302,8 @@ if __name__ == '__main__':
                      'Influenza': [],
                      'Metapneumovirus': [],
                      'Rhinovirus': [],
-                     'Human': []
+                     'Human': [],
+                     'rc_discarded': []
                      }
     
     total_sequences = 0
@@ -310,7 +354,7 @@ if __name__ == '__main__':
         for f in tmp_files:
             with open(OUTPUTDIR+'/'+f,'rb') as fd:
                 shutil.copyfileobj(fd, wfd)
-
+        
     for delete_file in tmp_files:
         os.remove(OUTPUTDIR+'/'+delete_file)
         print()
@@ -321,7 +365,9 @@ if __name__ == '__main__':
                       len(total_results['Metapneumovirus'])+\
                       len(total_results['Rhinovirus'])+\
                       len(total_results['Sars_cov_2'])+\
-                      len(total_results['Human'])
+                      len(total_results['Human'])+\
+                      len(total_results['rc_discarded'])
+                      
     discarded_reads = total_sequences - processed_reads                  
     if processed_reads == 0:
         print('There are no processed reads')
@@ -332,18 +378,20 @@ if __name__ == '__main__':
           ' were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))')
     
     df_results = pd.DataFrame()
-    df_results['filename'] = 7*[os.path.basename(FILE_IN)]
+    df_results['filename'] = 8*[os.path.basename(FILE_IN)]
     df_results['class'] = ['SARS-CoV-2', 'Coronaviridae', 
                            'Influenza', 'Metapneumovirus', 
-                           'Rhinovirus','Human','Discarded']
+                           'Rhinovirus','Human','Discarded',
+                           'rc_discarded']
 
     df_results['# predicted reads'] = [len(total_results['Sars_cov_2']),
                                        len(total_results['Coronaviridae']),
                                        len(total_results['Influenza']),
                                        len(total_results['Metapneumovirus']),
                                        len(total_results['Rhinovirus']),
-                                       len(total_results['Human']), discarded_reads
-                                        ]
+                                       len(total_results['Human']), discarded_reads,
+                                       len(total_results['rc_discarded'])
+                                       ]
     
     percentage = {}
     for classes in total_results:
@@ -351,13 +399,14 @@ if __name__ == '__main__':
         percentage[classes] = ( number_class/ total_sequences) *100
     percentage['Discarded'] = discarded_reads * 100 / total_sequences
     df_results['predicted reads (%)'] = [percentage['Sars_cov_2'],
-                                           percentage['Coronaviridae'],
-                                           percentage['Influenza'],
-                                           percentage['Metapneumovirus'],
-                                           percentage['Rhinovirus'],
-                                           percentage['Human'],
-                                           percentage['Discarded']
-                                          ]
+                                         percentage['Coronaviridae'],
+                                         percentage['Influenza'],
+                                         percentage['Metapneumovirus'],
+                                         percentage['Rhinovirus'],
+                                         percentage['Human'],
+                                         percentage['Discarded'],
+                                         percentage['rc_discarded']
+                                        ]
     threshold_reads = {}
     total_threshold_reads = 0
     for classes in total_results:
@@ -371,8 +420,10 @@ if __name__ == '__main__':
                                                                         threshold_reads['Metapneumovirus'],
                                                                         threshold_reads['Rhinovirus'],
                                                                         threshold_reads['Human'],
-                                                                        threshold_reads['Discarded']
+                                                                        threshold_reads['Discarded'],
+                                                                        threshold_reads['rc_discarded']
                                                                        ]
+    
     
     df_results['predicted reads above '+str(THRESHOLD_PREDICTION)+' (%)'] = \
                [threshold_reads['Sars_cov_2']/total_sequences*100 ,
@@ -381,8 +432,9 @@ if __name__ == '__main__':
                 threshold_reads['Metapneumovirus']/total_sequences*100,
                 threshold_reads['Rhinovirus']/total_sequences*100,
                 threshold_reads['Human']/total_sequences*100,
-                threshold_reads['Discarded']/total_sequences*100
-               ]
+                threshold_reads['Discarded']/total_sequences*100,
+                threshold_reads['rc_discarded']/total_sequences*100
+               ]        
     
     
     print()
