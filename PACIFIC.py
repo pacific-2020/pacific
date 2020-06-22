@@ -196,7 +196,8 @@ def predict_chunk(sequences,
                  K_MERS,
                  FILE_TYPE,
                  total_results,
-                 total_sequences):
+                 total_sequences,
+                 counter):
     '''
     Predicting and write a chunk of reads
     '''
@@ -276,6 +277,7 @@ if __name__ == '__main__':
     sequences = []
     names = []
     counter = 0
+    tmp_files = []
     for fasta in fasta_sequences:
         name, sequence = fasta.id, str(fasta.seq)
         sequences.append(sequence)
@@ -287,22 +289,22 @@ if __name__ == '__main__':
                                                            K_MERS,
                                                            FILE_TYPE,
                                                            total_results,
-                                                           total_sequences)
+                                                           total_sequences,
+                                                           counter)
             sequences = []
             names = []
             print()
             print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
-        
+            tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
     if len(sequences) > 0:
         total_results, total_sequences = predict_chunk(sequences,
                                                        names,
                                                        K_MERS,
                                                        FILE_TYPE,
                                                        total_results,
-                                                       total_sequences)
-    
-    tmp_files = os.listdir(OUTPUTDIR)
-    tmp_files = [i for i in tmp_files if i.startswith('tmp_output_'+ os.path.basename(FILE_IN))]
+                                                       total_sequences,
+                                                       counter)
+        tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
     import shutil
 
     if FILE_IN.endswith(".gz"):
