@@ -86,6 +86,9 @@ left_join(filter(predictionmetrics, datatype == "mm") %>% group_by(class) %>% dp
           filter(predictionmetrics, datatype == "mm") %>% summarySE(measurevar = "balancedaccuracy", groupvars = c("class"))
 )
 
+left_join(filter(predictionmetrics, datatype == "all") %>% group_by(class) %>% dplyr::summarise(min = min(fpr), max = max(fpr)),
+          filter(predictionmetrics, datatype == "all") %>% summarySE(measurevar = "fpr", groupvars = c("class"))
+)
 
 
 
@@ -123,7 +126,7 @@ predictions %>%
   theme_bw()
 
 
-
+predictions %>% filter(as.character(knownlabel) != as.character(predictedlabel)) %>% group_by(dataid,knownlabel,predictedlabel) %>% dplyr::summarise(totalcounts = sum(readcounts)) %>% group_by(dataid, predictedlabel) %>% dplyr::summarise( knownlabel=knownlabel, fppid = totalcounts*100/sum(totalcounts), fpclass = totalcounts,  totalfp= sum(totalcounts)) %>% ggplot(aes(x=knownlabel,y=predictedlabel, fill=fppid)) + geom_tile() + scale_fill_viridis_c()
 
 
 

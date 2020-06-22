@@ -127,7 +127,7 @@ import pandas as pd
 import tensorflow as tf
 import sys
 import gzip
-
+import re
 #Suppress tensorflow warnings
 #tf.logging.set_verbosity(tf.logging.ERROR)
 #tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
@@ -148,10 +148,11 @@ def process_reads(sequences, kmer, names):
     # Create lists for the discarded reads
     discarded_names = []
     discarded_sequences = []
-    
+    validbases=re.compile('^[ACGTacgt]+$')
+    minlen=150
     for i in enumerate(sequences):
         # check the reads does not contain weird characters
-        if all(c in 'AGCT' for c in i[1].upper()) and len(i[1]) >= 150:
+        if validbases.match(i[1][:minlen]) and len(i[1]) >= minlen:
             read = i[1][:150]
             complete_reads.append(read)
             r_reads.append(' '.join(read[x:x+kmer].upper() for x in range(len(read) - kmer + 1)))
