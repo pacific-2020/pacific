@@ -98,7 +98,7 @@ usage: python PACIFIC.py [options] -i <in.fa>|<in.fq> -m <model> -t <tokenizer> 
   -T <float>, --prediction_threshold <float>
                         Threshold/cutoff for predictions [0.95]
   -c <int>, --chunk_size <int>
-                        Number of reads per chunk [10000]
+                        Number of reads per chunk [100000]
   -O, --output_fasta    If this option is "True", a FASTA file containing
                         predictions for each read will be provided [False]
   -v, --version         show program's version number and exit

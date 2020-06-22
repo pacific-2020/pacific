@@ -82,7 +82,7 @@ OPTIONAL.add_argument("-T", "--prediction_threshold",
                       )
 
 OPTIONAL.add_argument("-c", "--chunk_size",
-                      help='Number of reads per chunk [10000]',
+                      help='Number of reads per chunk [100000]',
                       metavar='<int>',
                       default=100000,
                       type=int
