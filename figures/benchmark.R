@@ -102,10 +102,14 @@ predictionmetrics %>% filter(class != "Human" & class != "Unrelated") %>%
   gather( key = "test", value = "metric", -dataid, -class, -datatype) %>% 
   arrange(dataid,class) %>% 
   ggplot(aes(x=class,y=metric,fill=datatype)) + 
-  geom_boxplot(notch = T) + 
+  geom_boxplot(notch = T, lwd=0.2) + 
   facet_wrap(.~test) + 
   theme_bw() + 
-  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+  theme(axis.text.x = element_text(angle = 30, hjust = 1)) +
+  xlab("Virus class") + ylab("Value") +
+  labs(fill = "Read types") +
+  scale_fill_discrete(labels = c("All", "Mismatch", "Exact")) +
+  theme(text = element_text(size=20)
 
 predictionmetrics %>% filter(class != "Human" & class != "Unrelated") %>% 
   select(dataid, class, datatype, fpr) %>% 

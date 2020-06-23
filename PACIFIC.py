@@ -61,7 +61,7 @@ REQUIRED.add_argument("-l", "--label_maker",
 OPTIONAL.add_argument("-f", "--file_type",
                       help='FASTA or FASTQ training file format [fasta]',
                       metavar='<fasta/fastq>',
-                      default='fasta',
+                      default='fastq',
                       )
 
 OPTIONAL.add_argument("-o", "--outputdir",
@@ -118,6 +118,9 @@ warnings.filterwarnings('ignore',category=UserWarning)
 # import other packages
 from Bio import SeqIO
 from Bio.Seq import Seq
+from Bio.SeqIO.FastaIO import SimpleFastaParser
+from Bio.SeqIO.QualityIO import FastqGeneralIterator
+
 import pickle
 from keras.models import load_model
 import random
@@ -314,41 +317,51 @@ if __name__ == '__main__':
                      }
     
     total_sequences = 0
-    if FILE_IN.endswith(".gz"):
-        fasta_sequences = SeqIO.parse(gzip.open(FILE_IN, mode='rt'), FILE_TYPE)
-    else: 
-        fasta_sequences = SeqIO.parse(open(FILE_IN), FILE_TYPE)
+    if FILE_IN.endswith("fa.gz") or FILE_IN.endswith("fasta.gz"):
+        fasta_sequences  = gzip.open(FILE_IN, mode = "rt")
+    elif FILE_IN.endswith("fa") or FILE_IN.endswith("fasta"): 
+        fasta_sequences  = open(FILE_IN, mode = "r")
+    elif FILE_IN.endswith("fq.gz") or FILE_IN.endswith("fastq.gz"):
+        fastq_sequences  = gzip.open(FILE_IN, mode = "rt")
+    elif FILE_IN.endswith("fq") or FILE_IN.endswith("fastq"):
+        fastq_sequences  = open(FILE_IN, mode = "r")
+    else:
+        sys.exit("Please provide fasta(.gz), fastq(.gz), fa(.gz), or fq(.gz) file as input")
     sequences = []
     names = []
     counter = 0
     tmp_files = []
-    for fasta in fasta_sequences:
-        name, sequence = fasta.id, str(fasta.seq)
-        sequences.append(sequence)
-        names.append(name)
-        counter +=1
-        if counter%CHUNK_SIZE == 0:
-            total_results, total_sequences = predict_chunk(sequences,
-                                                           names,
-                                                           K_MERS,
-                                                           FILE_TYPE,
-                                                           total_results,
-                                                           total_sequences,
-                                                           counter)
-            sequences = []
-            names = []
-            print()
-            print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
+    if FILE_TYPE == "fasta":    
+        for (name,sequence) in SimpleFastaParser(fasta_sequences):
+            sequences.append(sequence)
+            names.append(name)
+            counter +=1
+            if counter%CHUNK_SIZE == 0:
+                total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
+                sequences = []
+                names = []
+                print()
+                print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
+                tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+        if len(sequences) > 0:
+            total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
             tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
-    if len(sequences) > 0:
-        total_results, total_sequences = predict_chunk(sequences,
-                                                       names,
-                                                       K_MERS,
-                                                       FILE_TYPE,
-                                                       total_results,
-                                                       total_sequences,
-                                                       counter)
-        tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+    elif FILE_TYPE == "fastq":
+        for (name,sequence, quality) in FastqGeneralIterator(fastq_sequences):
+            sequences.append(sequence)
+            names.append(name)
+            counter +=1
+            if counter%CHUNK_SIZE == 0:
+                total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
+                sequences = []
+                names = []
+                print()
+                print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
+                tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+        if len(sequences) > 0:
+            total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
+            tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+
     import shutil
 
     if FILE_IN.endswith(".gz"):
