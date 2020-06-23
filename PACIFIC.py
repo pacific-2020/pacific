@@ -373,11 +373,11 @@ if __name__ == '__main__':
     print('Writing final output FASTA '+fasta_name_out)
     with gzip.open(fasta_name_out,mode='wb') as wfd:
         for f in tmp_files:
-            with open(OUTPUTDIR+'/'+f,'rb') as fd:
+            with open(f,'rb') as fd:
                 shutil.copyfileobj(fd, wfd)
         
     for delete_file in tmp_files:
-        os.remove(OUTPUTDIR+'/'+delete_file)
+        os.remove(delete_file)
         print()
         print('Deleting temporary file '+delete_file)
     
