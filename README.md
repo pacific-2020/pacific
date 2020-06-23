@@ -39,7 +39,8 @@ python ../PACIFIC.py \
   -i test.fa.gz \
   -m ../model/pacific.01.pacific_9mers_nonGPU.h5 \
   -t ../model/tokenizer.01.pacific_9mers.pickle \
-  -l ../model/label_maker.01.pacific_9mers.pickle
+  -l ../model/label_maker.01.pacific_9mers.pickle \ 
+  -f fasta
 ```
 
 If installed correctly, PACIFIC should generate pacificoutput_test.fa.gz and test.fa.gz_summary.txt in the test directory, and should provide the following results in the terminal:
@@ -47,14 +48,15 @@ If installed correctly, PACIFIC should generate pacificoutput_test.fa.gz and tes
 ```
 From a total of 5000 reads, 0 were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))
 
-filename            class  # predicted reads  predicted reads (%)  # predicted reads above 0.95  predicted reads above 0.95 (%)
+   filename            class  # predicted reads  predicted reads (%)  # predicted reads above 0.95  predicted reads above 0.95 (%)
  test.fa.gz       SARS-CoV-2                  0                 0.00                             0                            0.00
- test.fa.gz    Coronaviridae               4998                99.96                          4998                           99.96
+ test.fa.gz    Coronaviridae               4997                99.94                          4997                           99.94
  test.fa.gz        Influenza                  0                 0.00                             0                            0.00
  test.fa.gz  Metapneumovirus                  0                 0.00                             0                            0.00
- test.fa.gz       Rhinovirus                  1                 0.02                             0                            0.00
+ test.fa.gz       Rhinovirus                  0                 0.00                             0                            0.00
  test.fa.gz            Human                  1                 0.02                             0                            0.00
  test.fa.gz        Discarded                  0                 0.00                             0                            0.00
+ test.fa.gz     rc_discarded                  2                 0.04                             1                            0.02
 
 Thank you for using PACIFIC =^)
 ```
@@ -92,15 +94,15 @@ usage: python PACIFIC.py [options] -i <in.fa>|<in.fq> -m <model> -t <tokenizer> 
 ```
   -h, --help            show this help message and exit
   -f <fasta/fastq>, --file_type <fasta/fastq>
-                        FASTA or FASTQ training file format [fasta]
+                        FASTA or FASTQ training file format [fastq]
   -o <dir>, --outputdir <dir>
                         Path to output directory [.]
+  -d <dir>, --tmpdir <dir>
+                        Path to tmp directory [outputdir]
   -T <float>, --prediction_threshold <float>
                         Threshold/cutoff for predictions [0.95]
   -c <int>, --chunk_size <int>
                         Number of reads per chunk [100000]
-  -O, --output_fasta    If this option is "True", a FASTA file containing
-                        predictions for each read will be provided [False]
   -v, --version         show program's version number and exit
 ```
 
