@@ -71,7 +71,7 @@ OPTIONAL.add_argument("-o", "--outputdir",
                       default=".")
 
 OPTIONAL.add_argument("-d", "--tmpdir",
-                      help='Path to tmp directory [.]',
+                      help='Path to tmp directory [outputdir]',
                       metavar='<dir>')                      
 
 #OPTIONAL.add_argument("-k", "--k_mers",
