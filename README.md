@@ -128,7 +128,7 @@ For example, the following describes a sequence predicted to be of the Coronavir
 ```
 
 *2. $input_summary.txt:*
-A text file which summarises the number of predicted reads for each class and their predicted proportions (%)both in the entire dataset, as well as in predicted reads with a score above 0.95. The table also provides information on discarded and rc_discarded reads. This is the same information that is provided as output in the terminal when PACIFIC is run.
+A text file which summarises the number of predicted reads for each class and their predicted proportions (%) both in the entire dataset, as well as in predicted reads with a score above 0.95. The table also provides information on discarded and rc_discarded reads. This is the same information that is provided as output in the terminal when PACIFIC is run.
 
 ## Test and model data
 
