@@ -59,7 +59,7 @@ REQUIRED.add_argument("-l", "--label_maker",
 
 #arguments
 OPTIONAL.add_argument("-f", "--file_type",
-                      help='FASTA or FASTQ training file format [fasta]',
+                      help='FASTA or FASTQ training file format [fastq]',
                       metavar='<fasta/fastq>',
                       default='fastq',
                       )
