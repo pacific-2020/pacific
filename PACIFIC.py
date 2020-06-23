@@ -14,11 +14,14 @@ PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the followin
 
 """
 
+#Import libraries
 import argparse
 import sys
 import warnings
 import os
+import tempfile
 
+#Provide info for user
 parser = argparse.ArgumentParser(prog='PACIFIC v0.1', description=
                                  """ 
                                  PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the following viruses and their relative sample proportions:
@@ -34,9 +37,7 @@ parser = argparse.ArgumentParser(prog='PACIFIC v0.1', description=
 OPTIONAL = parser._action_groups.pop()
 REQUIRED = parser.add_argument_group('required arguments')
 
-#Inputs
-## CHANGE -m  -t -l -f to OPTIONAL and CREATE RELATIVE PATHS FOR THESE FILES
-
+#Required inputs
 REQUIRED.add_argument("-i", "--input_file",
                       help="FASTA/FASTQ input file path",
                       metavar='\b',
@@ -57,7 +58,7 @@ REQUIRED.add_argument("-l", "--label_maker",
                       metavar='\b',
                       required=True)
 
-#arguments
+#Optional arguments
 OPTIONAL.add_argument("-f", "--file_type",
                       help='FASTA or FASTQ training file format [fastq]',
                       metavar='<fasta/fastq>',
@@ -68,6 +69,10 @@ OPTIONAL.add_argument("-o", "--outputdir",
                       help='Path to output directory [.]',
                       metavar='<dir>',
                       default=".")
+
+OPTIONAL.add_argument("-d", "--tmpdir",
+                      help='Path to tmp directory [.]',
+                      metavar='<dir>')                      
 
 #OPTIONAL.add_argument("-k", "--k_mers",
 #                      help='K-mer number use to train the model [9]',
@@ -96,19 +101,23 @@ parser._action_groups.append(OPTIONAL)
 
 ARGS = parser.parse_args()
 
-# Inputs
+#Define argument inputs
 FILE_IN = ARGS.input_file
 MODEL = ARGS.model
 TOKENIZER = ARGS.tokenizer
 LABEL_MAKER = ARGS.label_maker
 
-
-# Arguments
+#Define optional arguments
 MODEL = ARGS.model
 FILE_TYPE = ARGS.file_type
 OUTPUTDIR = ARGS.outputdir
 THRESHOLD_PREDICTION = ARGS.prediction_threshold
 CHUNK_SIZE = ARGS.chunk_size
+
+if ARGS.tmpdir is None:
+    tmpdir=OUTPUTDIR
+else:
+    tmpdir = ARGS.tmpdir    
 
 #Suppress warnings
 import warnings
@@ -142,7 +151,11 @@ dirname = os.path.dirname(__file__)
 #TOKENIZER = os.path.join(dirname, '../model', 'tokenizer.01.pacific_9mers.pickle')
 #LABEL_MAKER = os.path.join(dirname, '../model', 'label_maker.01.pacific_9mers.pickle')
 
+#Create tmpdir for output
+#tmpdir=tempfile.mkdtemp()
+#print('Creating temporary folder: ' + tmpdir)
 
+#Define functions
 def process_reads(sequences, kmer, names):
     '''
     '''
@@ -263,7 +276,7 @@ def predict_chunk(sequences,
         
     
     print()
-    fasta_name_out = OUTPUTDIR+'/tmp_output_'+ os.path.basename(FILE_IN) +'_'+str(counter)
+    fasta_name_out = tmpdir+'/tmp_output_'+ os.path.basename(FILE_IN) +'_'+str(counter)
     print('Writing temporary output file '+fasta_name_out)
     with open(fasta_name_out,'w') as output:
         for i in enumerate(names):
@@ -317,6 +330,8 @@ if __name__ == '__main__':
                      }
     
     total_sequences = 0
+
+    #Check file extension
     if FILE_IN.endswith("fa.gz") or FILE_IN.endswith("fasta.gz"):
         fasta_sequences  = gzip.open(FILE_IN, mode = "rt")
     elif FILE_IN.endswith("fa") or FILE_IN.endswith("fasta"): 
@@ -331,56 +346,71 @@ if __name__ == '__main__':
     names = []
     counter = 0
     tmp_files = []
-    if FILE_TYPE == "fasta":    
-        for (name,sequence) in SimpleFastaParser(fasta_sequences):
-            sequences.append(sequence)
-            names.append(name)
-            counter +=1
-            if counter%CHUNK_SIZE == 0:
+
+    #Print sequences for fasta file    
+    try:
+        if FILE_TYPE == "fasta":    
+            for (name,sequence) in SimpleFastaParser(fasta_sequences):
+                sequences.append(sequence)
+                names.append(name)
+                counter +=1
+                if counter%CHUNK_SIZE == 0:
+                    total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
+                    sequences = []
+                    names = []
+                    print()
+                    print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
+                    tmp_files.append(tmpdir + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+            if len(sequences) > 0:
                 total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
-                sequences = []
-                names = []
-                print()
-                print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
-                tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
-        if len(sequences) > 0:
-            total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
-            tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
-    elif FILE_TYPE == "fastq":
-        for (name,sequence, quality) in FastqGeneralIterator(fastq_sequences):
-            sequences.append(sequence)
-            names.append(name)
-            counter +=1
-            if counter%CHUNK_SIZE == 0:
+                tmp_files.append(tmpdir + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+        elif FILE_TYPE == "fastq":
+            for (name,sequence, quality) in FastqGeneralIterator(fastq_sequences):
+                sequences.append(sequence)
+                names.append(name)
+                counter +=1
+                if counter%CHUNK_SIZE == 0:
+                    total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
+                    sequences = []
+                    names = []
+                    print()
+                    print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
+                    tmp_files.append(tmpdir + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+            if len(sequences) > 0:
                 total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
-                sequences = []
-                names = []
-                print()
-                print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
-                tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
-        if len(sequences) > 0:
-            total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
-            tmp_files.append(OUTPUTDIR + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+                tmp_files.append(tmpdir + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
 
-    import shutil
+        import shutil
 
-    if FILE_IN.endswith(".gz"):
-        fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN))
-    else: 
-        fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN)+".gz")  
+        if FILE_IN.endswith(".gz"):
+            fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN))
+        else: 
+            fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN)+".gz")  
 
-    print()
-    print('Writing final output FASTA '+fasta_name_out)
-    with gzip.open(fasta_name_out,mode='wb') as wfd:
-        for f in tmp_files:
-            with open(f,'rb') as fd:
-                shutil.copyfileobj(fd, wfd)
-        
-    for delete_file in tmp_files:
-        os.remove(delete_file)
         print()
-        print('Deleting temporary file '+delete_file)
+        print('Writing final output FASTA '+fasta_name_out)
+        with gzip.open(fasta_name_out,mode='wb') as wfd:
+            for f in tmp_files:
+                with open(f,'rb') as fd:
+                    shutil.copyfileobj(fd, wfd)
+
+    #Exit if there is an error in writing sequences
+    except IOError as e:
+        #print('IOError')
+        sys.exit("Error in writing sequences - if -d/--tmpdir flag supplied, check whether the tmpdir is available")
+    #else:
+    #    shutil.rmtree(tmpdir)
+    #    print('Reads not parsing into seqs')
     
+    #Delete tmp files
+    finally:
+       for delete_file in tmp_files:
+        os.remove(delete_file)
+        #print()
+        #print('Deleting temporary file '+delete_file)
+        #shutil.rmtree(tmpdir)   
+    
+    #Processed reads for table
     processed_reads = len(total_results['Influenza'])+\
                       len(total_results['Coronaviridae'])+\
                       len(total_results['Metapneumovirus'])+\
@@ -388,16 +418,19 @@ if __name__ == '__main__':
                       len(total_results['Sars_cov_2'])+\
                       len(total_results['Human'])+\
                       len(total_results['rc_discarded'])
-                      
+
+    #Discarded reads for table                  
     discarded_reads = total_sequences - processed_reads                  
     if processed_reads == 0:
         print('There are no processed reads')
         sys.exit()
     
+    #Print number of reads discarded
     print()
     print('From a total of '+str(total_sequences)+' reads, '+str(discarded_reads)+\
           ' were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))')
     
+    #Define data frame for summary table
     df_results = pd.DataFrame()
     df_results['filename'] = 8*[os.path.basename(FILE_IN)]
     df_results['class'] = ['SARS-CoV-2', 'Coronaviridae', 
@@ -458,6 +491,7 @@ if __name__ == '__main__':
                ]        
     
     
+    #Print summary table to output file
     print()
     print(df_results.to_string(index=False))
     df_results.to_csv(OUTPUTDIR+'/'+os.path.basename(FILE_IN)+'_summary.txt',
