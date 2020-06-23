@@ -397,7 +397,7 @@ if __name__ == '__main__':
     #Exit if there is an error in writing sequences
     except IOError as e:
         #print('IOError')
-        sys.exit("Error in writing sequences - if -d/--tmpdir flag supplied, check whether the tmpdir is available")
+        sys.exit("Error in writing sequences - if -d/--tmpdir or -o/--outputdir flag supplied, check whether the supplied directory is available")
     #else:
     #    shutil.rmtree(tmpdir)
     #    print('Reads not parsing into seqs')
