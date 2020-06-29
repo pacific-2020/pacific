@@ -28,7 +28,7 @@ df$filename <- gsub("\\.fa.*","",df$filename)
 ##############
 #Plots for positive and negative controls
 
-negmd <- read_tsv("pacific/metadata/rnaseqtests.negsamples.SraRunTable.20200624.tab", col_names=T)
+negmd <- read_csv("pacific/metadata/rnaseqtests.negsamples.SraRunTable.20200624.csv", col_names=T)
 posmd <- read_csv("pacific/metadata/rnaseqtests.possamples.SraRunTable.20200624.csv", col_names=T)
 
 #Filter and label for negative and positive samples
