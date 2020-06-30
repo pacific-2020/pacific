@@ -12,7 +12,8 @@ dat <- read_tsv("pacific/figures/rnaseqtests.txt", col_names=T)
 colnames(dat) <- c("filename", "class", "predicted_reads", "perc_predicted_reads", "predicted_reads_95","perc_predicted_reads_95")
 
 #Create cutoff data frame. Cutoffs were derived from FPR tests
-co <- tibble(class = unique(dat$class), cutoff = c(0.0004,0.0506,0.0014,0.0002,0.0466,NA,NA,NA)) %>% 
+#Means were determined as three standard deviations away from the mean in FPR tests
+co <- tibble(class = unique(dat$class), cutoff = c(0.0002540988,0.0427490964,0.0008649834,0.0001261678,0.0452518826,NA,NA,NA)) %>% 
   filter(!class %in% c("Human", "Discarded", "rc_discarded"))
 
 #Join cutoff information
@@ -24,6 +25,7 @@ df$classification <- ifelse(df$perc_predicted_reads_95>df$cutoff, "Positive", "N
 #Remove text
 df$filename <- gsub("_.*","",df$filename)
 df$filename <- gsub("\\.fa.*","",df$filename)
+df$class <- gsub("SARS-CoV-2", "Sars_cov_2", df$class)
 
 ##############
 #Plots for positive and negative controls
@@ -42,6 +44,7 @@ pos <- semi_join(df,posmd,by=c("filename"="Run")) %>%
   
 #Join negative and positive tables
 negpos <- rbind(neg,pos)
+negpos$class <- gsub("SARS-CoV-2", "Sars_cov_2", negpos$class)
 
 #Create bubble plot of classifications for positive and negative controls
 negpos %>% 
@@ -90,21 +93,21 @@ wcombdf <- combdf %>%
   filter(classification %in% "Positive")
 
 #Extract positive samples
-#md %>% filter(run %in% c(wcombdf %>% pull(run))) %>%
-#  select(run,sampleID)
+md %>% filter(run %in% c(wcombdf %>% pull(run))) %>%
+  select(run,qpcr_species,rnaseq_species,sampleID)
 
 #Create bubble plot of classifications for md samples
 combdf %>% 
-  select(run,class,perc_predicted_reads_95, classification,cutoff) %>%
+  select(sampleID,class,perc_predicted_reads_95, classification,cutoff) %>%
   filter(!class %in% c("Human", "Discarded", "rc_discarded")) %>%
   drop_na %>%
-  arrange(desc(classification,run)) %>%
-  mutate(run = fct_rev(as_factor(run))) %>%
+  arrange(desc(classification,sampleID)) %>%
+  mutate(sampleID = fct_rev(as_factor(sampleID))) %>%
   ggplot() +
-  geom_point(aes(class,run, size=cutoff), color="black", alpha=0.3) +
-  geom_point(aes(class,run, size=perc_predicted_reads_95, color=classification), alpha=1) +
+  geom_point(aes(class,sampleID, size=cutoff), color="black", alpha=0.3) +
+  geom_point(aes(class,sampleID, size=perc_predicted_reads_95, color=classification), alpha=1) +
   scale_color_manual(name="Classification", values=c("dodgerblue", "black"), breaks=c("Positive","Negative"))+
-  labs(y = "Sample", x="Class")+
+  labs(y = "Sample", x="Virus class")+
   guides(size=guide_legend(title="PR (%)"))+
   theme_bw()+
   theme(text=element_text(size=16),axis.text.x=element_text(angle=30,hjust=1))
