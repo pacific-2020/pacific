@@ -257,8 +257,9 @@ def predict_chunk(sequences,
     
     label_normal = np.array(labels)
     label_normal = label_normal[virus_predictions_index]
-
-    labels_rc = predict_rc(reads_np, K_MERS)
+    
+    if len(reads_np) > 0:
+        labels_rc = predict_rc(reads_np, K_MERS)
     
     df_predictions = pd.DataFrame({'labels_n': label_normal,
                                    'labels_rc': labels_rc})
