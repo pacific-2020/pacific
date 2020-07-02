@@ -213,17 +213,18 @@ def predict_rc(reads, kmer):
     Make predictions of the reverse complement of the reads
     '''
     #reverse complement
+    
     reads_rc = []
     for read in reads:
         reads_rc.append(str(Seq(read).reverse_complement()))
-    
+
     kmer_reads_rc = []
     for i in enumerate(reads_rc):
         kmer_reads_rc.append(' '.join(i[1][x:x+kmer].upper() for x in range(len(i[1]) - kmer + 1)))
-        
+
     tokenize_kmers = tokenizer.texts_to_sequences(kmer_reads_rc)
     predicted_reads = model.predict(np.array(tokenize_kmers))
-    
+
     return label_maker.inverse_transform(np.array(predicted_reads), threshold=THRESHOLD_PREDICTION) 
 
 
@@ -261,21 +262,22 @@ def predict_chunk(sequences,
     if len(reads_np) > 0:
         labels_rc = predict_rc(reads_np, K_MERS)
     
-    df_predictions = pd.DataFrame({'labels_n': label_normal,
+        df_predictions = pd.DataFrame({'labels_n': label_normal,
                                    'labels_rc': labels_rc})
-    
-    df_predictions['same'] = np.where((df_predictions['labels_n'] == df_predictions['labels_rc'])
+
+        df_predictions['same'] = np.where((df_predictions['labels_n'] == df_predictions['labels_rc'])
                                       ,'same', 'c_discarded')
-    
-    df_predictions['global_index'] = virus_predictions_index
-    
-    virus_predictions_wrong = df_predictions[df_predictions['same'] == 'c_discarded']['global_index']
-    
-    df_labels.loc[virus_predictions_wrong,'labels'] = 'rc_discarded'
-    
-    labels = df_labels['labels'].tolist()
+
+        df_predictions['global_index'] = virus_predictions_index
+
+        virus_predictions_wrong = df_predictions[df_predictions['same'] == 'c_discarded']['global_index']
+
+        df_labels.loc[virus_predictions_wrong,'labels'] = 'rc_discarded'
+
+        labels = df_labels['labels'].tolist()
+    else:
+        labels = df_labels['labels'].tolist()
         
-    
     print()
     fasta_name_out = tmpdir+'/tmp_output_'+ os.path.basename(FILE_IN) +'_'+str(counter)
     print('Writing temporary output file '+fasta_name_out)
