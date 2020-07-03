@@ -14,11 +14,14 @@ PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the followin
 
 """
 
+#Import libraries
 import argparse
 import sys
 import warnings
 import os
+import tempfile
 
+#Provide info for user
 parser = argparse.ArgumentParser(prog='PACIFIC v0.1', description=
                                  """ 
                                  PACIFIC takes a FASTA/FASTQ input file and predicts the presence of the following viruses and their relative sample proportions:
@@ -34,9 +37,7 @@ parser = argparse.ArgumentParser(prog='PACIFIC v0.1', description=
 OPTIONAL = parser._action_groups.pop()
 REQUIRED = parser.add_argument_group('required arguments')
 
-#Inputs
-## CHANGE -m  -t -l -f to OPTIONAL and CREATE RELATIVE PATHS FOR THESE FILES
-
+#Required inputs
 REQUIRED.add_argument("-i", "--input_file",
                       help="FASTA/FASTQ input file path",
                       metavar='\b',
@@ -57,17 +58,21 @@ REQUIRED.add_argument("-l", "--label_maker",
                       metavar='\b',
                       required=True)
 
-#arguments
+#Optional arguments
 OPTIONAL.add_argument("-f", "--file_type",
-                      help='FASTA or FASTQ training file format [fasta]',
+                      help='FASTA or FASTQ training file format [fastq]',
                       metavar='<fasta/fastq>',
-                      default='fasta',
+                      default='fastq',
                       )
 
 OPTIONAL.add_argument("-o", "--outputdir",
                       help='Path to output directory [.]',
                       metavar='<dir>',
                       default=".")
+
+OPTIONAL.add_argument("-d", "--tmpdir",
+                      help='Path to tmp directory [outputdir]',
+                      metavar='<dir>')                      
 
 #OPTIONAL.add_argument("-k", "--k_mers",
 #                      help='K-mer number use to train the model [9]',
@@ -92,24 +97,27 @@ OPTIONAL.add_argument('-v', '--version',
                         action='version', 
                         version='%(prog)s')
 
-
 parser._action_groups.append(OPTIONAL)
 
 ARGS = parser.parse_args()
 
-# Inputs
+#Define argument inputs
 FILE_IN = ARGS.input_file
 MODEL = ARGS.model
 TOKENIZER = ARGS.tokenizer
 LABEL_MAKER = ARGS.label_maker
 
-
-# Arguments
+#Define optional arguments
 MODEL = ARGS.model
 FILE_TYPE = ARGS.file_type
 OUTPUTDIR = ARGS.outputdir
 THRESHOLD_PREDICTION = ARGS.prediction_threshold
 CHUNK_SIZE = ARGS.chunk_size
+
+if ARGS.tmpdir is None:
+    tmpdir=OUTPUTDIR
+else:
+    tmpdir = ARGS.tmpdir    
 
 #Suppress warnings
 import warnings
@@ -118,6 +126,9 @@ warnings.filterwarnings('ignore',category=UserWarning)
 
 # import other packages
 from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqIO.FastaIO import SimpleFastaParser
+from Bio.SeqIO.QualityIO import FastqGeneralIterator
 
 import pickle
 from keras.models import load_model
@@ -127,18 +138,24 @@ import pandas as pd
 import tensorflow as tf
 import sys
 import gzip
-
+import re
 #Suppress tensorflow warnings
 #tf.logging.set_verbosity(tf.logging.ERROR)
 #tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+import itertools
+import string
 
 # hardcode paths to tokenizer and label maker
 dirname = os.path.dirname(__file__)
 #TOKENIZER = os.path.join(dirname, '../model', 'tokenizer.01.pacific_9mers.pickle')
 #LABEL_MAKER = os.path.join(dirname, '../model', 'label_maker.01.pacific_9mers.pickle')
 
+#Create tmpdir for output
+#tmpdir=tempfile.mkdtemp()
+#print('Creating temporary folder: ' + tmpdir)
 
+#Define functions
 def process_reads(sequences, kmer, names):
     '''
     '''
@@ -148,10 +165,11 @@ def process_reads(sequences, kmer, names):
     # Create lists for the discarded reads
     discarded_names = []
     discarded_sequences = []
-    
+    validbases=re.compile('^[ACGTacgt]+$')
+    minlen=150
     for i in enumerate(sequences):
         # check the reads does not contain weird characters
-        if all(c in 'AGCT' for c in i[1].upper()) and len(i[1]) >= 150:
+        if validbases.match(i[1][:minlen]) and len(i[1]) >= minlen:
             read = i[1][:150]
             complete_reads.append(read)
             r_reads.append(' '.join(read[x:x+kmer].upper() for x in range(len(read) - kmer + 1)))
@@ -188,14 +206,35 @@ def accuracy(labels, predictions):
     except:
         return 0
     
-    return correct/len(labels)
+    return correct/len(labels)    
+
+def predict_rc(reads, kmer):
+    '''
+    Make predictions of the reverse complement of the reads
+    '''
+    #reverse complement
+    
+    reads_rc = []
+    for read in reads:
+        reads_rc.append(str(Seq(read).reverse_complement()))
+
+    kmer_reads_rc = []
+    for i in enumerate(reads_rc):
+        kmer_reads_rc.append(' '.join(i[1][x:x+kmer].upper() for x in range(len(i[1]) - kmer + 1)))
+
+    tokenize_kmers = tokenizer.texts_to_sequences(kmer_reads_rc)
+    predicted_reads = model.predict(np.array(tokenize_kmers))
+
+    return label_maker.inverse_transform(np.array(predicted_reads), threshold=THRESHOLD_PREDICTION) 
+
 
 def predict_chunk(sequences,
                  names,
                  K_MERS,
                  FILE_TYPE,
                  total_results,
-                 total_sequences):
+                 total_sequences,
+                 counter):
     '''
     Predicting and write a chunk of reads
     '''
@@ -206,14 +245,41 @@ def predict_chunk(sequences,
                                                                                 names,
                                                                                 K_MERS,
                                                                                 )
-                                            
     kmer_sequences = tokenizer.texts_to_sequences(kmer_sequences)
        
     predictions = model.predict(np.array(kmer_sequences))
-    labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)
+    labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)    
+    
+    df_labels = pd.DataFrame({'labels': labels})
+    virus_predictions_index = df_labels[df_labels['labels'] != 'Human'].index.tolist()
+    
+    reads_np = np.array(reads)
+    reads_np = reads_np[virus_predictions_index]
+    
+    label_normal = np.array(labels)
+    label_normal = label_normal[virus_predictions_index]
+    
+    if len(reads_np) > 0:
+        labels_rc = predict_rc(reads_np, K_MERS)
+    
+        df_predictions = pd.DataFrame({'labels_n': label_normal,
+                                   'labels_rc': labels_rc})
+
+        df_predictions['same'] = np.where((df_predictions['labels_n'] == df_predictions['labels_rc'])
+                                      ,'same', 'c_discarded')
+
+        df_predictions['global_index'] = virus_predictions_index
+
+        virus_predictions_wrong = df_predictions[df_predictions['same'] == 'c_discarded']['global_index']
+
+        df_labels.loc[virus_predictions_wrong,'labels'] = 'rc_discarded'
+
+        labels = df_labels['labels'].tolist()
+    else:
+        labels = df_labels['labels'].tolist()
         
     print()
-    fasta_name_out = OUTPUTDIR+'/tmp_output_'+ os.path.basename(FILE_IN) +'_'+str(counter)
+    fasta_name_out = tmpdir+'/tmp_output_'+ os.path.basename(FILE_IN) +'_'+str(counter)
     print('Writing temporary output file '+fasta_name_out)
     with open(fasta_name_out,'w') as output:
         for i in enumerate(names):
@@ -223,8 +289,6 @@ def predict_chunk(sequences,
         for j in enumerate(discarded_names):
             print('>'+j[1]+':-1:Discarded', file=output)
             print(discarded_sequences[j[0]], file=output)
-
-
                 
     return total_results, total_sequences
 
@@ -232,10 +296,10 @@ def predict_chunk(sequences,
 if __name__ == '__main__':
 
     seed_value = 42
-    random.seed(seed_value)# 3. Set `numpy` pseudo-random generator at a fixed value
-    np.random.seed(seed_value)# 4. Set `tensorflow` pseudo-random generator at a fixed value
+    random.seed(seed_value) # 3. Set `numpy` pseudo-random generator at a fixed value
+    np.random.seed(seed_value) # 4. Set `tensorflow` pseudo-random generator at a fixed value
     try:
-        tf.random.set_seed(seed_value)# 5. For layers that introduce randomness like dropout, make sure to set seed values 
+        tf.random.set_seed(seed_value) # 5. For layers that introduce randomness like dropout, make sure to set seed values 
     except:
         tf.set_random_seed(seed_value)
     
@@ -264,91 +328,127 @@ if __name__ == '__main__':
                      'Influenza': [],
                      'Metapneumovirus': [],
                      'Rhinovirus': [],
-                     'Human': []
+                     'Human': [],
+                     'rc_discarded': []
                      }
     
     total_sequences = 0
-    if FILE_IN.endswith(".gz"):
-        fasta_sequences = SeqIO.parse(gzip.open(FILE_IN, mode='rt'), FILE_TYPE)
-    else: 
-        fasta_sequences = SeqIO.parse(open(FILE_IN), FILE_TYPE)
+
+    #Check file extension
+    if FILE_IN.endswith("fa.gz") or FILE_IN.endswith("fasta.gz"):
+        fasta_sequences  = gzip.open(FILE_IN, mode = "rt")
+    elif FILE_IN.endswith("fa") or FILE_IN.endswith("fasta"): 
+        fasta_sequences  = open(FILE_IN, mode = "r")
+    elif FILE_IN.endswith("fq.gz") or FILE_IN.endswith("fastq.gz"):
+        fastq_sequences  = gzip.open(FILE_IN, mode = "rt")
+    elif FILE_IN.endswith("fq") or FILE_IN.endswith("fastq"):
+        fastq_sequences  = open(FILE_IN, mode = "r")
+    else:
+        sys.exit("Please provide fasta(.gz), fastq(.gz), fa(.gz), or fq(.gz) file as input")
     sequences = []
     names = []
     counter = 0
-    for fasta in fasta_sequences:
-        name, sequence = fasta.id, str(fasta.seq)
-        sequences.append(sequence)
-        names.append(name)
-        counter +=1
-        if counter%CHUNK_SIZE == 0:
-            total_results, total_sequences = predict_chunk(sequences,
-                                                           names,
-                                                           K_MERS,
-                                                           FILE_TYPE,
-                                                           total_results,
-                                                           total_sequences)
-            sequences = []
-            names = []
-            print()
-            print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
-        
-    if len(sequences) > 0:
-        total_results, total_sequences = predict_chunk(sequences,
-                                                       names,
-                                                       K_MERS,
-                                                       FILE_TYPE,
-                                                       total_results,
-                                                       total_sequences)
-    
-    tmp_files = os.listdir(OUTPUTDIR)
-    tmp_files = [i for i in tmp_files if i.startswith('tmp_output_'+ os.path.basename(FILE_IN))]
-    import shutil
+    tmp_files = []
 
-    if FILE_IN.endswith(".gz"):
-        fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN))
-    else: 
-        fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN)+".gz")  
+    #Print sequences for fasta file    
+    try:
+        if FILE_TYPE == "fasta":    
+            for (name,sequence) in SimpleFastaParser(fasta_sequences):
+                sequences.append(sequence)
+                names.append(name)
+                counter +=1
+                if counter%CHUNK_SIZE == 0:
+                    total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
+                    sequences = []
+                    names = []
+                    print()
+                    print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
+                    tmp_files.append(tmpdir + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+            if len(sequences) > 0:
+                total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
+                tmp_files.append(tmpdir + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+        elif FILE_TYPE == "fastq":
+            for (name,sequence, quality) in FastqGeneralIterator(fastq_sequences):
+                sequences.append(sequence)
+                names.append(name)
+                counter +=1
+                if counter%CHUNK_SIZE == 0:
+                    total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
+                    sequences = []
+                    names = []
+                    print()
+                    print('predicting reads: '+str(counter-CHUNK_SIZE)+' '+str(counter))
+                    tmp_files.append(tmpdir + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
+            if len(sequences) > 0:
+                total_results, total_sequences = predict_chunk(sequences,names,K_MERS,FILE_TYPE,total_results,total_sequences,counter)
+                tmp_files.append(tmpdir + '/tmp_output_'+ os.path.basename(FILE_IN) + '_' + str(counter))
 
-    print()
-    print('Writing final output FASTA '+fasta_name_out)
-    with gzip.open(fasta_name_out,mode='wb') as wfd:
-        for f in tmp_files:
-            with open(OUTPUTDIR+'/'+f,'rb') as fd:
-                shutil.copyfileobj(fd, wfd)
+        import shutil
 
-    for delete_file in tmp_files:
-        os.remove(OUTPUTDIR+'/'+delete_file)
+        if FILE_IN.endswith(".gz"):
+            fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN))
+        else: 
+            fasta_name_out =os.path.join(OUTPUTDIR, "pacificoutput_" + os.path.basename(FILE_IN)+".gz")  
+
         print()
-        print('Deleting temporary file '+delete_file)
+        print('Writing final output FASTA '+fasta_name_out)
+        with gzip.open(fasta_name_out,mode='wb') as wfd:
+            for f in tmp_files:
+                with open(f,'rb') as fd:
+                    shutil.copyfileobj(fd, wfd)
+
+    #Exit if there is an error in writing sequences
+    except IOError as e:
+        #print('IOError')
+        sys.exit("Error in writing sequences - if -d/--tmpdir or -o/--outputdir flag supplied, check whether the supplied directory is available")
+    #else:
+    #    shutil.rmtree(tmpdir)
+    #    print('Reads not parsing into seqs')
     
+    #Delete tmp files
+    finally:
+       for delete_file in tmp_files:
+        os.remove(delete_file)
+        #print()
+        #print('Deleting temporary file '+delete_file)
+        #shutil.rmtree(tmpdir)   
+    
+    #Processed reads for table
     processed_reads = len(total_results['Influenza'])+\
                       len(total_results['Coronaviridae'])+\
                       len(total_results['Metapneumovirus'])+\
                       len(total_results['Rhinovirus'])+\
                       len(total_results['Sars_cov_2'])+\
-                      len(total_results['Human'])
+                      len(total_results['Human'])+\
+                      len(total_results['rc_discarded'])
+
+    #Discarded reads for table                  
     discarded_reads = total_sequences - processed_reads                  
     if processed_reads == 0:
         print('There are no processed reads')
         sys.exit()
     
+    #Print number of reads discarded
     print()
     print('From a total of '+str(total_sequences)+' reads, '+str(discarded_reads)+\
           ' were discarded (e.g. non-ACGT nucleotides/characters or short reads (<150bp))')
     
+    #Define data frame for summary table
     df_results = pd.DataFrame()
-    df_results['filename'] = 7*[os.path.basename(FILE_IN)]
+    df_results['filename'] = 8*[os.path.basename(FILE_IN)]
     df_results['class'] = ['SARS-CoV-2', 'Coronaviridae', 
                            'Influenza', 'Metapneumovirus', 
-                           'Rhinovirus','Human','Discarded']
+                           'Rhinovirus','Human','Discarded',
+                           'rc_discarded']
 
     df_results['# predicted reads'] = [len(total_results['Sars_cov_2']),
                                        len(total_results['Coronaviridae']),
                                        len(total_results['Influenza']),
                                        len(total_results['Metapneumovirus']),
                                        len(total_results['Rhinovirus']),
-                                       len(total_results['Human']), discarded_reads
-                                        ]
+                                       len(total_results['Human']), discarded_reads,
+                                       len(total_results['rc_discarded'])
+                                       ]
     
     percentage = {}
     for classes in total_results:
@@ -356,13 +456,14 @@ if __name__ == '__main__':
         percentage[classes] = ( number_class/ total_sequences) *100
     percentage['Discarded'] = discarded_reads * 100 / total_sequences
     df_results['predicted reads (%)'] = [percentage['Sars_cov_2'],
-                                           percentage['Coronaviridae'],
-                                           percentage['Influenza'],
-                                           percentage['Metapneumovirus'],
-                                           percentage['Rhinovirus'],
-                                           percentage['Human'],
-                                           percentage['Discarded']
-                                          ]
+                                         percentage['Coronaviridae'],
+                                         percentage['Influenza'],
+                                         percentage['Metapneumovirus'],
+                                         percentage['Rhinovirus'],
+                                         percentage['Human'],
+                                         percentage['Discarded'],
+                                         percentage['rc_discarded']
+                                        ]
     threshold_reads = {}
     total_threshold_reads = 0
     for classes in total_results:
@@ -376,8 +477,10 @@ if __name__ == '__main__':
                                                                         threshold_reads['Metapneumovirus'],
                                                                         threshold_reads['Rhinovirus'],
                                                                         threshold_reads['Human'],
-                                                                        threshold_reads['Discarded']
+                                                                        threshold_reads['Discarded'],
+                                                                        threshold_reads['rc_discarded']
                                                                        ]
+    
     
     df_results['predicted reads above '+str(THRESHOLD_PREDICTION)+' (%)'] = \
                [threshold_reads['Sars_cov_2']/total_sequences*100 ,
@@ -386,10 +489,12 @@ if __name__ == '__main__':
                 threshold_reads['Metapneumovirus']/total_sequences*100,
                 threshold_reads['Rhinovirus']/total_sequences*100,
                 threshold_reads['Human']/total_sequences*100,
-                threshold_reads['Discarded']/total_sequences*100
-               ]
+                threshold_reads['Discarded']/total_sequences*100,
+                threshold_reads['rc_discarded']/total_sequences*100
+               ]        
     
     
+    #Print summary table to output file
     print()
     print(df_results.to_string(index=False))
     df_results.to_csv(OUTPUTDIR+'/'+os.path.basename(FILE_IN)+'_summary.txt',
