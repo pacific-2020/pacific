@@ -87,6 +87,33 @@ colnames(sam) <-  c("run", "readid", "class")
 fa$run <- gsub("pacificoutput_", "", fa$run)
 sam$class <- gsub("Cornidovirineae", "Coronaviridae", sam$class)
 
+
+#Separate by class for correlation test
+bwa <- sam %>% 
+  group_by(run,class) %>% 
+  summarise(bwa=n())
+
+pacific <- fa %>% 
+  group_by(run,class) %>% 
+  summarise(fa=n())
+
+bwa$class <- gsub("rhinovirus", "Rhinovirus", bwa$class )
+
+pacbwa <- left_join(df,bwa,by=c("filename"="run", "class"="class")) %>% 
+  filter(filename %in% md$run) %>%
+  select(filename,class,predicted_reads_95, bwa) %>%
+  replace(is.na(.), 0) %>%
+  filter(!class %in% c("Human", "Discarded", "rc_discarded"))
+
+cor.test(pacbwa$predicted_reads_95,pacbwa$bwa)
+
+bwaj <- left_join(bwa,md, by="run") %>%
+  select(run,class,bwa,qpcr_species,rnaseq_species) %>%
+  arrange(desc(bwa))
+pacificj <- left_join(pacific,md, by="run") %>%
+  select(run,class,fa,qpcr_species,rnaseq_species) %>%
+  arrange(desc(fa))
+
 #Prepare dataframes
 s <- sam %>% 
   mutate(id = paste(run,readid,class, sep=":"), type="sam") %>%
