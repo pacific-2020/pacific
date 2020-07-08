@@ -1,4 +1,4 @@
-filename	class	pp_0.95	reads	prop_totalreads
+SRA_ID	class	pp_0.95	reads	prop_totalreads
 SRR6411409	SARS-CoV-2	above	1	3.07772e-6
 SRR6411409	Coronaviridae	above	356	0.00109567
 SRR6411409	Influenza	above	2	6.15543e-6
