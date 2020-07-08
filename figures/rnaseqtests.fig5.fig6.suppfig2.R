@@ -105,14 +105,29 @@ pacbwa <- left_join(df,bwa,by=c("filename"="run", "class"="class")) %>%
   replace(is.na(.), 0) %>%
   filter(!class %in% c("Human", "Discarded", "rc_discarded"))
 
-cor.test(pacbwa$predicted_reads_95,pacbwa$bwa)
+#Correlation test - Spearman's correlation is used as there are outliers on the data 
+#Therefore, Pearson would be inappropriate
 
+result <- NULL
+for (c in unique(pacbwa$class))
+{
+  tmp <- pacbwa %>% 
+    filter(class %in% c)
+  o <- cor(tmp$predicted_reads_95,tmp$bwa, method="spearman")
+  result[c] <- o
+}
+
+#As all SARS-CoV-2 is zero, assign correlation of 1
+result[1] <- 1
+mean(result)
+
+#Report positive classes
 bwaj <- left_join(bwa,md, by="run") %>%
   select(run,class,bwa,qpcr_species,rnaseq_species) %>%
-  arrange(desc(bwa))
+  arrange(desc(qpcr_species,rnaseq_species, bwa))
 pacificj <- left_join(pacific,md, by="run") %>%
   select(run,class,fa,qpcr_species,rnaseq_species) %>%
-  arrange(desc(fa))
+  arrange(desc(qpcr_species,rnaseq_species, fa))
 
 #Prepare dataframes
 s <- sam %>% 
