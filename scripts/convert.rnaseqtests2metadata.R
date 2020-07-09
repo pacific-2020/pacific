@@ -25,6 +25,8 @@ tmp2 <- dat %>%
 #Concatenate files and remove file extensions
 combined.df <- rbind(tmp2,tmp1)
 combined.df$SRA_ID <- gsub("\\.fa.*","",combined.df$SRA_ID)
+combined.df <- combined.df %>%
+  arrange(SRA_ID, class)
 
 write_tsv(combined.df, "pacific/metadata/pacificsummaries.realdatasets.txt")
 
