@@ -141,6 +141,23 @@ f <- fa %>%
 j <- full_join(f,s, by=c("run","id"))
 colnames(j) <- c("run", "id", "fa.pres", "sam.pres")
 
+#Extract reads that did not overlap in SRR4427280, SRR4427267 and SRR4427270
+srr80.out <- j %>% 
+  filter(run %in% "SRR4427280") %>%
+  filter(sam.pres %in% NA)
+
+srr70.out <- j %>% 
+  filter(run %in% "SRR4427270") %>%
+  filter(fa.pres %in% NA)
+
+srr67.out <- j %>% 
+  filter(run %in% "SRR4427267") %>%
+  filter(fa.pres %in% NA)
+
+write_tsv(srr80.out, "srr80.reads.txt")
+write_tsv(srr70.out, "srr70.reads.txt")
+write_tsv(srr67.out, "srr67.reads.txt")
+
 #Join dataframes
 both <- j %>% 
   drop_na() %>% 
