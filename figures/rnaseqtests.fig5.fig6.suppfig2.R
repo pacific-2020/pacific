@@ -15,9 +15,9 @@ dat <- read_tsv("pacific/figures/rnaseqtests.txt", col_names=T)
 colnames(dat) <- c("filename", "class", "predicted_reads", "perc_predicted_reads", "predicted_reads_95","perc_predicted_reads_95")
 
 #Create cutoff data frame. Cutoffs were derived from FPR tests
-#Cutoffs were determined as three standard deviations away from the mean in FPR tests
+#Cutoffs were determined as above 99% of the data in FPR tests using a beta distribution
 co <- tibble(class = unique(dat$class), 
-             cutoff = c(0.0002540988,0.0427490964,0.0008649834,0.0001261678,0.0452518826,NA,NA,NA)) %>% 
+             cutoff = c(0.000213116230298516,0.0404740377229317,0.000806814626438465,0.000153651861475909,0.0418425381539617,NA,NA,NA)) %>% 
   filter(!class %in% c("Human", "Discarded", "rc_discarded"))
 
 #Join cutoff information
