@@ -59,16 +59,16 @@ negpos <- negpos %>%
 
 #####
 #Load read ids for further analysis
-np <- read_tsv("/Users/Renzo/negpos.pacificfareadids.txt", col_names=F)
+np <- read_tsv("pacific/figures/negpos.pacificfareadids.txt", col_names=F)
 colnames(np) <-  c("run", "readid", "class")
 
-ns <- read_tsv("/Users/Renzo/negposctrl.samreadids.unique.txt", col_names=F)
+ns <- read_tsv("pacific/figures/negposctrl.samreadids.unique.txt", col_names=F)
 colnames(ns) <-  c("run", "readid", "class")
 
-n20 <- read_tsv("/Users/Renzo/negposctrl.mapq20.samreadids.unique.txt", col_names=F)
+n20 <- read_tsv("pacific/figures/negposctrl.mapq20.samreadids.unique.txt", col_names=F)
 colnames(n20) <-  c("run", "readid", "class")
 
-nk <- read_tsv("/Users/Renzo/negpos_kraken_samples_out.txt", col_names=F)
+nk <- read_tsv("pacific/figures/negpos_kraken_samples_out.txt", col_names=F)
 nk <- nk %>% 
   select(X1,X2,X3)
 colnames(nk) <-  c("run", "readid", "class")
@@ -104,7 +104,7 @@ nj <- full_join(nj,nk, by=c("id","run"))
 
 nj <- unique(nj) 
 
-write_tsv(nj, "/Users/Renzo/pbk.negpos.readidoverlap2.txt")
+#write_tsv(nj, "/Users/Renzo/pbk.negpos.readidoverlap2.txt")
 
 #Create summary numbers
 pac <- nj %>%
@@ -155,7 +155,7 @@ pbksummary$filename <- factor(pbksummary$filename, levels=rev(unique(negpos$file
 pbksummary$class <- gsub("rhinovirus", "Rhinovirus", pbksummary$class)
 
 #Read total read numbers
-tot <- read_tsv("/Users/Renzo/negpossamples.totalreads.txt", col_names=F)
+tot <- read_tsv("pacific/figures/negpossamples.totalreads.txt", col_names=F)
 colnames(tot) <- c("run", "totalreads")
 pbksummary <- left_join(pbksummary,tot)
 pbksummary <- pbksummary %>%
@@ -181,13 +181,13 @@ combdf <- left_join(md,df,by=c("run"="filename"))
 #Load dataframe of PACIFIC and BWA. Generate overlaps
 sam <- read_tsv("pacific/figures/samreadids.unique.txt", col_names=F)
 fa <- read_tsv("pacific/figures/pacificfareadids.txt", col_names=F)
-kraken <- read_tsv("/Users/Renzo/gala.kraken.150.parsed.3col.txt", col_names=F)
+kraken <- read_tsv("pacific/figures/gala.kraken.150.parsed.3col.txt", col_names=F)
 
 colnames(fa) <-  c("run", "readid", "class")
 colnames(sam) <-  c("run", "readid", "class")
 colnames(kraken) <-  c("run", "readid", "class")
 
-n20 <- read_tsv("/Users/Renzo/wastudy.mapq20.samreadids.unique.txt", col_names=F)
+n20 <- read_tsv("pacific/figures/wastudy.mapq20.samreadids.unique.txt", col_names=F)
 colnames(n20) <-  c("run", "readid", "class")
 n20$run <- gsub("\\..*", "", n20$run)
 n20$class <- gsub("Cornidovirineae", "Coronaviridae", n20$class)
@@ -236,7 +236,7 @@ j <- full_join(j,k, by=c("id","run"))
 
 j <- unique(j) 
 
-write_tsv(j, "pacific/metadata/pbk.wastudy.readidoverlap.txt")
+#write_tsv(j, "pacific/metadata/pbk.wastudy.readidoverlap.txt")
 
 #Create summary numbers
 pac <- j %>%
@@ -277,7 +277,7 @@ pbksummary <- left_join(forj,pbksum) %>%
 pbksummary$class <- gsub("rhinovirus", "Rhinovirus", pbksummary$class)
 
 #Read total read numbers
-tot <- read_tsv("/Users/Renzo/gala.totalreads.txt", col_names=F)
+tot <- read_tsv("pacific/figures/gala.totalreads.txt", col_names=F)
 colnames(tot) <- c("run", "totalreads")
 pbksummary <- left_join(pbksummary,tot)
 pbksummary <- pbksummary %>%
