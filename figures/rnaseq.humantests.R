@@ -392,15 +392,21 @@ positivewa <- pbksummary %>%
   filter(run %in% positivewa$run)
 positiveall <- rbind(positive,positivewa)
 positiveall$run <- factor(positiveall$run, levels = rev(unique(positiveall$run)))
+positiveall$fname <- "replace"
+positiveall$fname <- ifelse(positiveall$run %in% c("SRR11412227","SRR11412228","SRR11412229","SRR11412230"), paste(positiveall$run,".scc",sep=""), positiveall$fname)
+positiveall$fname <- ifelse(positiveall$run %in% c("SRR10971381"), paste(positiveall$run,".pat",sep=""), positiveall$fname)
+positiveall$fname <- ifelse(positiveall$fname %in% "replace", paste(positiveall$run,".gala",sep=""), positiveall$fname)
+positiveall$fname <- factor(positiveall$fname, levels = rev(unique(positiveall$fname)))
 
 #Draw plot for all positive samples
 pacp <- positiveall  %>%
   ggplot() +
-  geom_point(aes(x=class,y=run, size=cutoff), color="black", alpha=0.3) +
-  geom_point(aes(x=class,y=run, size=pacific_prop, color=pac_classification), alpha=1) +
+  geom_point(aes(x=class,y=fname, size=cutoff), color="black", alpha=0.3) +
+  geom_point(aes(x=class,y=fname, size=pacific_prop, color=pac_classification), alpha=1) +
   scale_color_manual(name="Classification", values=c("dodgerblue", "black"), breaks=c("Positive","Negative"))+
   labs(y = "Sample", x="Virus class")+
   guides(size=guide_legend(title="Read proportions (%)"))+
+  guides(color = FALSE)+
   theme_bw()+
   scale_size_continuous(breaks = c(0,0.2,0.4,0.6,0.8),
                         limits=c(0,1))+
@@ -415,11 +421,12 @@ pacp <- positiveall  %>%
 
 bwap <- positiveall %>%
   ggplot() +
-  geom_point(aes(x=class,y=run, size=cutoff), color="black", alpha=0.3) +
-  geom_point(aes(x=class,y=run, size=bwa_prop, color=bwa_classification), alpha=1) +
+  geom_point(aes(x=class,y=fname, size=cutoff), color="black", alpha=0.3) +
+  geom_point(aes(x=class,y=fname, size=bwa_prop, color=bwa_classification), alpha=1) +
   scale_color_manual(name="Classification", values=c("dodgerblue", "black"), breaks=c("Positive","Negative"))+
   labs(y = "Sample", x="Virus class")+
-  guides(size=guide_legend(title="PR (%)"))+
+  guides(size=guide_legend(title="Read proportions (%)"))+
+  guides(color = FALSE)+
   theme_bw()+
   scale_size_continuous(breaks = c(0,0.2,0.4,0.6,0.8),
                         limits=c(0,1))+
@@ -435,11 +442,12 @@ bwap <- positiveall %>%
 
 krakp <- positiveall %>%
   ggplot() +
-  geom_point(aes(x=class,y=run, size=cutoff), fill="black", alpha=0.3) +
-  geom_point(aes(x=class,y=run, size=kraken_prop, color=krak_classification), alpha=1) +
+  geom_point(aes(x=class,y=fname, size=cutoff), fill="black", alpha=0.3) +
+  geom_point(aes(x=class,y=fname, size=kraken_prop, color=krak_classification), alpha=1) +
   scale_color_manual(name="Classification", values=c("dodgerblue", "black"), breaks=c("Positive","Negative"))+
   labs(y = "Sample", x="Virus class")+
-  guides(size=guide_legend(title="Number of reads"))+
+  guides(size=guide_legend(title="Read proportions (%)"))+
+  guides(color = FALSE)+
   theme_bw()+
   scale_size_continuous(breaks = c(0,0.2,0.4,0.6,0.8),
                         limits=c(0,1))+
@@ -462,12 +470,14 @@ negative <- negpos.pbksummary %>%
   filter(run %in% negative$filename) %>%
   arrange(desc(bwa_classification))
 negative$run <- factor(negative$run, levels = rev(unique(negative$run)))
+negative$fname <- paste(negative$run, ".neg", sep="")
+negative$fname <- factor(negative$fname, levels = rev(unique(negative$fname)))
 
 #Draw plot for negative samples
 pacp <- negative  %>%
   ggplot() +
-  geom_point(aes(x=class,y=run, size=cutoff), color="black", alpha=0.3) +
-  geom_point(aes(x=class,y=run, size=pacific_prop, color=pac_classification), alpha=1) +
+  geom_point(aes(x=class,y=fname, size=cutoff), color="black", alpha=0.3) +
+  geom_point(aes(x=class,y=fname, size=pacific_prop, color=pac_classification), alpha=1) +
   scale_color_manual(name="Classification", values=c("dodgerblue", "black"), breaks=c("Positive","Negative"))+
   labs(y = "Sample", x="Virus class")+
   guides(size=guide_legend(title=""))+
@@ -485,8 +495,8 @@ pacp <- negative  %>%
 
 bwap <- negative %>%
   ggplot() +
-  geom_point(aes(x=class,y=run, size=cutoff), color="black", alpha=0.3) +
-  geom_point(aes(x=class,y=run, size=bwa_prop, color=bwa_classification), alpha=1) +
+  geom_point(aes(x=class,y=fname, size=cutoff), color="black", alpha=0.3) +
+  geom_point(aes(x=class,y=fname, size=bwa_prop, color=bwa_classification), alpha=1) +
   scale_color_manual(name="Classification", values=c("dodgerblue", "black"), breaks=c("Positive","Negative"))+
   labs(y = "Sample", x="Virus class")+
   guides(size=guide_legend(title="PR (%)"))+
@@ -505,8 +515,8 @@ bwap <- negative %>%
 
 krakp <- negative %>%
   ggplot() +
-  geom_point(aes(x=class,y=run, size=cutoff), fill="black", alpha=0.3) +
-  geom_point(aes(x=class,y=run, size=kraken_prop, color=krak_classification), alpha=1) +
+  geom_point(aes(x=class,y=fname, size=cutoff), fill="black", alpha=0.3) +
+  geom_point(aes(x=class,y=fname, size=kraken_prop, color=krak_classification), alpha=1) +
   scale_color_manual(name="Classification", values=c("dodgerblue", "black"), breaks=c("Positive","Negative"))+
   labs(y = "Sample", x="Virus class")+
   guides(size=guide_legend(title="Number of reads"))+
@@ -523,7 +533,7 @@ krakp <- negative %>%
   )+
   ggtitle("Kraken2")
 
-plot_grid(pacp,bwap, krakp, rel_widths = c(2.75/6,2/6, 2/6), ncol=3)
+plot_grid(pacp,bwap, krakp, rel_widths = c(3.6/6,2/6, 2/6), ncol=3)
 
 #Create metadata table
 plotdata <- data.frame()
