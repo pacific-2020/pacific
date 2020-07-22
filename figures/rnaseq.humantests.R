@@ -380,7 +380,7 @@ krakp <- pbksummary.all %>%
   )+
   ggtitle("Kraken2")
 
-plot_grid(pacp,bwap, bwa20p, krakp, rel_widths = c(2.5/6,1.75/6, 1.75/6, 1.75/6), ncol=4)
+plot_grid(pacp,bwap, krakp, rel_widths = c(2.5/6,1.75/6, 1.75/6, 1.75/6), ncol=4)
 
 #Draw plot for positive samples only
 positive <- negpos[negpos$classification %in% "Positive",]
