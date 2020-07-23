@@ -70,8 +70,8 @@ Thank you for using PACIFIC =^)
     - pandas 0.25.1
     - tensorflow 2.2.0
     - scikit-learn 0.21.3
-    - cudatoolkit 10.1.168
-    - cudnn 7.6.0
+    - cudatoolkit 10.1.168 (only for GPU mode)
+    - cudnn 7.6.0 (only for GPU mode)
     
   (for a full list of package versions, view metadata/pacific_versions.txt)
 
