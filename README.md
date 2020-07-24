@@ -1,8 +1,5 @@
 ![picture](msc/pacific_brand.png)
 
-
-# PACIFIC 
-
 PACIFIC: A lightweight alignment-free deep-learning classifier of SARS-CoV-2 and co-infecting viral sequences  
 (Add preprint link once submitted)
 
