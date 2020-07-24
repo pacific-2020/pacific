@@ -1,6 +1,4 @@
-![picture](msc/rect_pacific_brand.png)
-
-<p align="center"><img src="msc/rect_pacific_brand.png" height="300"></p>
+![picture](msc/pacific_brand.png)
 
 
 # PACIFIC 
