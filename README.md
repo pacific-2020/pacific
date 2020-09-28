@@ -27,12 +27,21 @@ PACIFIC implements deep learning to classify RNA sequencing reads into human, SA
 Note: As the model file is ~300MB, we hosted this file on Cloudstor. The model file can be found [here](https://cloudstor.aarnet.edu.au/plus/s/Hwg20YRlua9a2OH). We recommend that users download this file and place it in the model directory as in the code below:
 
 ```
-#Clone repository
+##Create required virtual environment for running PACIFIC
+conda create --name pacific python=3.7.6
+
+##Activate the environment
+conda activate pacific
+
+##Install required dependencies
+conda install numpy=1.18.1 tensorflow=2.2.0 keras=2.3.1 pandas=1.0.1 scikit-learn=0.21.3 biopython=1.76
+
+#Clone PACIFIC repository
 git clone https://github.com/pacific-2020/pacific.git
 
 #Download model file
 cd pacific
-wget -O model/pacific.01.pacific_9mers_nonGPU.h5 https://cloudstor.aarnet.edu.au/plus/s/Hwg20YRlua9a2OH/download 
+wget -O model/pacific.01.pacific_9mers_nonGPU.h5 https://cloudstor.aarnet.edu.au/plus/s/Hwg20YRlua9a2OH/download
 
 #Change to test directory and run PACIFIC
 cd test
@@ -64,11 +73,10 @@ Thank you for using PACIFIC =^)
 
 ## System requirements
 - Python 3.X+ (python.org/) with the following libraries:
-    - Bio 1.74
-    - sklearn 0.20.3
-    - numPy 1.16.4
-    - keras 2.2.4
-    - pandas 0.25.1
+    - Bio 1.76
+    - numPy 1.18.1
+    - keras 2.3.1
+    - pandas 1.0.1
     - tensorflow 2.2.0
     - scikit-learn 0.21.3
     - cudatoolkit 10.1.168 (only for GPU mode)
