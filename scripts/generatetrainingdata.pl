@@ -4,7 +4,7 @@ use warnings;
 use Getopt::Long;
 use Data::Dumper;
 
-my ($inputfasta, $maxseqlen, $depth, $strand, $outputfasta);
+my ($inputfasta, $maxseqlen, $depth, $strand, $outputfasta) = @ARGV;
 GetOptions ("inputfasta|i=s" => \$inputfasta,    # path to input fasta file for sampling
             "maxseqlen|l=i"   => \$maxseqlen,      # numeric integer for maximum length of the sequence
             "depth|d=i"  => \$depth,
