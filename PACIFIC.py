@@ -143,17 +143,9 @@ import re
 #tf.logging.set_verbosity(tf.logging.ERROR)
 #tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
-import itertools
-import string
 
 # hardcode paths to tokenizer and label maker
 dirname = os.path.dirname(__file__)
-#TOKENIZER = os.path.join(dirname, '../model', 'tokenizer.01.pacific_9mers.pickle')
-#LABEL_MAKER = os.path.join(dirname, '../model', 'label_maker.01.pacific_9mers.pickle')
-
-#Create tmpdir for output
-#tmpdir=tempfile.mkdtemp()
-#print('Creating temporary folder: ' + tmpdir)
 
 #Define functions
 def process_reads(sequences, kmer, names):
@@ -329,6 +321,7 @@ if __name__ == '__main__':
                      'Metapneumovirus': [],
                      'Rhinovirus': [],
                      'Human': [],
+                     'RSV':[],
                      'rc_discarded': []
                      }
     
@@ -420,6 +413,7 @@ if __name__ == '__main__':
                       len(total_results['Rhinovirus'])+\
                       len(total_results['Sars_cov_2'])+\
                       len(total_results['Human'])+\
+                      len(total_results['RSV'])+\
                       len(total_results['rc_discarded'])
 
     #Discarded reads for table                  
@@ -435,10 +429,10 @@ if __name__ == '__main__':
     
     #Define data frame for summary table
     df_results = pd.DataFrame()
-    df_results['filename'] = 8*[os.path.basename(FILE_IN)]
+    df_results['filename'] = 9*[os.path.basename(FILE_IN)]
     df_results['class'] = ['SARS-CoV-2', 'Coronaviridae', 
                            'Influenza', 'Metapneumovirus', 
-                           'Rhinovirus','Human','Discarded',
+                           'Rhinovirus','Human','RSV', 'Discarded',
                            'rc_discarded']
 
     df_results['# predicted reads'] = [len(total_results['Sars_cov_2']),
@@ -446,7 +440,9 @@ if __name__ == '__main__':
                                        len(total_results['Influenza']),
                                        len(total_results['Metapneumovirus']),
                                        len(total_results['Rhinovirus']),
-                                       len(total_results['Human']), discarded_reads,
+                                       len(total_results['Human']),
+                                       len(total_results['RSV']),
+                                       discarded_reads,
                                        len(total_results['rc_discarded'])
                                        ]
     
@@ -461,6 +457,7 @@ if __name__ == '__main__':
                                          percentage['Metapneumovirus'],
                                          percentage['Rhinovirus'],
                                          percentage['Human'],
+                                         percentage['RSV'],
                                          percentage['Discarded'],
                                          percentage['rc_discarded']
                                         ]
@@ -477,6 +474,7 @@ if __name__ == '__main__':
                                                                         threshold_reads['Metapneumovirus'],
                                                                         threshold_reads['Rhinovirus'],
                                                                         threshold_reads['Human'],
+                                                                        threshold_reads['RSV'],
                                                                         threshold_reads['Discarded'],
                                                                         threshold_reads['rc_discarded']
                                                                        ]
@@ -489,6 +487,7 @@ if __name__ == '__main__':
                 threshold_reads['Metapneumovirus']/total_sequences*100,
                 threshold_reads['Rhinovirus']/total_sequences*100,
                 threshold_reads['Human']/total_sequences*100,
+                threshold_reads['RSV']/total_sequences*100,
                 threshold_reads['Discarded']/total_sequences*100,
                 threshold_reads['rc_discarded']/total_sequences*100
                ]        

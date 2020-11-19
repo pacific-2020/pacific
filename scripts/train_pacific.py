@@ -259,6 +259,12 @@ if __name__ == '__main__':
     label_maker = LabelBinarizer()
     transfomed_label = label_maker.fit(labels_to_fit)
     
+         
+    # loading label maker
+    with open('/media/labuser/Data/pacific/model/label_maker.01.pacific_9mers.pickle', 'rb') as handle:
+        label_maker_original = pickle.load(handle)
+    
+    
     # save label_maker
     print('Saving object to convert output to labels '+ OUT_FOLDER+'/label_maker.'+MODEL_NAME+'.pickle')
 
@@ -303,7 +309,6 @@ if __name__ == '__main__':
     # Training
     batch_size = 30
     epochs = 1
-    
     
     # Define the model the model
     model = Sequential()
