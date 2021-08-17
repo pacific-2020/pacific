@@ -2,7 +2,7 @@
 
 ## PACIFIC: A lightweight deep-learning classifier of SARS-CoV-2 and co-infecting viral sequences  
 Read more about PACIFIC here:
-> [__Acera Mateos P., Balboa R.F., Easteal S., Eyras E., and Patel, H.R.__ PACIFIC: A lightweight deep-learning classifier of SARS-CoV-2 and co-infecting RNA viruses. *bioRxiv*, 2020.](https://www.biorxiv.org/content/10.1101/2020.07.24.219097v1)
+> [__Acera Mateos P., Balboa R.F., Easteal S., Eyras E., and Patel, H.R.__ PACIFIC: A lightweight deep-learning classifier of SARS-CoV-2 and co-infecting RNA viruses. *Scientific Reports*, 2021.](https://www.nature.com/articles/s41598-021-82043-4)
 
 PACIFIC implements deep learning to classify RNA sequencing reads into human, SARS-CoV-2 or additional respiratory viruses. PACIFIC takes an input FASTA/FASTQ file and predicts the presence of the following viruses and their relative proportions within a sample:
 - SARS-CoV-2
