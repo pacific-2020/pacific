@@ -232,43 +232,47 @@ def predict_chunk(sequences,
     '''
     
     total_sequences += len(sequences)
-    
+  
     reads, kmer_sequences, names, discarded_names, discarded_sequences = main(sequences,
                                                                                 names,
                                                                                 K_MERS,
                                                                                 )
-    kmer_sequences = tokenizer.texts_to_sequences(kmer_sequences)
-       
-    predictions = model.predict(np.array(kmer_sequences))
-    labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)    
     
-    df_labels = pd.DataFrame({'labels': labels})
-    virus_predictions_index = df_labels[df_labels['labels'] != 'Human'].index.tolist()
+    if len(kmer_sequences) >0:
+        kmer_sequences = tokenizer.texts_to_sequences(kmer_sequences)
+        
+        predictions = model.predict(np.array(kmer_sequences))
+            
+        labels = label_maker.inverse_transform(np.array(predictions), threshold=THRESHOLD_PREDICTION)    
+        
+        df_labels = pd.DataFrame({'labels': labels})
+        virus_predictions_index = df_labels[df_labels['labels'] != 'Human'].index.tolist()
+        
+        reads_np = np.array(reads)
+        reads_np = reads_np[virus_predictions_index]
+        
+        label_normal = np.array(labels)
+        label_normal = label_normal[virus_predictions_index]
+        
+        if len(reads_np) > 0:
+            labels_rc = predict_rc(reads_np, K_MERS)
+        
+            df_predictions = pd.DataFrame({'labels_n': label_normal,
+                                       'labels_rc': labels_rc})
     
-    reads_np = np.array(reads)
-    reads_np = reads_np[virus_predictions_index]
+            df_predictions['same'] = np.where((df_predictions['labels_n'] == df_predictions['labels_rc'])
+                                          ,'same', 'c_discarded')
     
-    label_normal = np.array(labels)
-    label_normal = label_normal[virus_predictions_index]
+            df_predictions['global_index'] = virus_predictions_index
     
-    if len(reads_np) > 0:
-        labels_rc = predict_rc(reads_np, K_MERS)
+            virus_predictions_wrong = df_predictions[df_predictions['same'] == 'c_discarded']['global_index']
     
-        df_predictions = pd.DataFrame({'labels_n': label_normal,
-                                   'labels_rc': labels_rc})
-
-        df_predictions['same'] = np.where((df_predictions['labels_n'] == df_predictions['labels_rc'])
-                                      ,'same', 'c_discarded')
-
-        df_predictions['global_index'] = virus_predictions_index
-
-        virus_predictions_wrong = df_predictions[df_predictions['same'] == 'c_discarded']['global_index']
-
-        df_labels.loc[virus_predictions_wrong,'labels'] = 'rc_discarded'
-
-        labels = df_labels['labels'].tolist()
-    else:
-        labels = df_labels['labels'].tolist()
+            df_labels.loc[virus_predictions_wrong,'labels'] = 'rc_discarded'
+    
+            labels = df_labels['labels'].tolist()
+        else:
+            labels = df_labels['labels'].tolist()
+    
         
     print()
     fasta_name_out = tmpdir+'/tmp_output_'+ os.path.basename(FILE_IN) +'_'+str(counter)
@@ -338,6 +342,7 @@ if __name__ == '__main__':
         fastq_sequences  = open(FILE_IN, mode = "r")
     else:
         sys.exit("Please provide fasta(.gz), fastq(.gz), fa(.gz), or fq(.gz) file as input")
+    
     sequences = []
     names = []
     counter = 0
